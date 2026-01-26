@@ -1,0 +1,7 @@
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pyotp==2.9.0
+pydantic[email]==2.5.0
+python-multipart==0.0.6
+qrcode==7.4.2
+Pillow==10.1.0

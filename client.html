@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TSMCA Authentication Client</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #999;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .qr-container {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .qr-container img {
+            max-width: 250px;
+            margin: 20px auto;
+            display: block;
+        }
+
+        .secret-display {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            word-break: break-all;
+        }
+
+        .secret-display strong {
+            color: #856404;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .session-info {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .session-info h3 {
+            color: #0056b3;
+            margin-bottom: 15px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #cce5ff;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .info-value {
+            color: #0056b3;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            margin-top: 15px;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        .device-info {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .instructions {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 TSMCA Authentication</h1>
+            <p>Time-Synchronized Multi-Channel Authentication System</p>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('register')">Register</button>
+            <button class="tab" onclick="switchTab('login')">Login</button>
+            <button class="tab" onclick="switchTab('dashboard')">Dashboard</button>
+        </div>
+
+        <!-- Registration Tab -->
+        <div id="register" class="tab-content active">
+            <div class="instructions">
+                <strong>Registration Instructions:</strong>
+                <ol>
+                    <li>Fill in your details below</li>
+                    <li>Install Google Authenticator or any TOTP app</li>
+                    <li>Scan the QR code that will be displayed</li>
+                    <li>Use the 6-digit code from your app to login</li>
+                </ol>
+            </div>
+
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="regUsername">Username</label>
+                    <input type="text" id="regUsername" required placeholder="Enter username">
+                </div>
+
+                <div class="form-group">
+                    <label for="regEmail">Email</label>
+                    <input type="email" id="regEmail" required placeholder="Enter email">
+                </div>
+
+                <div class="form-group">
+                    <label for="regPassword">Password</label>
+                    <input type="password" id="regPassword" required placeholder="Enter password">
+                </div>
+
+                <button type="submit">Register Account</button>
+            </form>
+
+            <div id="qrDisplay" style="display: none;"></div>
+        </div>
+
+        <!-- Login Tab -->
+        <div id="login" class="tab-content">
+            <div class="instructions">
+                <strong>Login Instructions:</strong>
+                <ol>
+                    <li>Enter your username</li>
+                    <li>Open your authenticator app</li>
+                    <li>Enter the 6-digit code shown</li>
+                    <li>Code refreshes every 30 seconds</li>
+                </ol>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" required placeholder="Enter username">
+                </div>
+
+                <div class="form-group">
+                    <label for="loginToken">6-Digit Authentication Code</label>
+                    <input type="text" id="loginToken" required placeholder="Enter 6-digit code" maxlength="6" pattern="[0-9]{6}">
+                </div>
+
+                <button type="submit">Authenticate</button>
+            </form>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content">
+            <div id="dashboardContent">
+                <div class="alert alert-info">
+                    Please login to view your dashboard.
+                </div>
+            </div>
+        </div>
+
+        <div class="device-info">
+            <strong>Device ID:</strong> <span id="deviceId"></span>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/v1';
+        let sessionToken = null;
+        let deviceId = null;
+
+        // Generate or retrieve device ID
+        function getDeviceId() {
+            let id = localStorage.getItem('deviceId');
+            if (!id) {
+                id = 'device_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('deviceId', id);
+            }
+            return id;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            deviceId = getDeviceId();
+            document.getElementById('deviceId').textContent = deviceId;
+            
+            // Check for existing session
+            sessionToken = localStorage.getItem('sessionToken');
+            if (sessionToken) {
+                validateSession();
+            }
+        });
+
+        // Switch tabs
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // Show alert
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        // Register form
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Registration successful! Scan the QR code below.', 'success');
+                    displayQRCode(data.qr_code_data);
+                } else {
+                    showAlert(data.detail || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                showAlert('Connection error: ' + error.message, 'error');
+            }
+        });
+
+        // Display QR code
+        function displayQRCode(uri) {
+            const qrDisplay = document.getElementById('qrDisplay');
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(uri)}`;
+            
+            qrDisplay.innerHTML = `
+                <div class="qr-container">
+                    <h3>Scan this QR Code</h3>
+                    <img src="${qrUrl}" alt="QR Code">
+                    <p>Use Google Authenticator, Authy, or any TOTP app</p>
+                    <div class="secret-display">
+                        <strong>Manual Entry:</strong><br>
+                        ${uri}
+                    </div>
+                </div>
+            `;
+            qrDisplay.style.display = 'block';
+        }
+
+        // Login form
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value;
+            const token = document.getElementById('loginToken').value;
+            
+            if (token.length !== 6 || !/^\d+$/.test(token)) {
+                showAlert('Please enter a valid 6-digit code', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/authenticate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username,
+                        token,
+                        device_id: deviceId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    sessionToken = data.session_token;
+                    localStorage.setItem('sessionToken', sessionToken);
+                    showAlert('Authentication successful!', 'success');
+                    
+                    // Clear form
+                    document.getElementById('loginForm').reset();
+                    
+                    // Switch to dashboard
+                    setTimeout(() => {
+                        document.querySelectorAll('.tab')[2].click();
+                        loadDashboard();
+                    }, 1000);
+                } else {
+                    showAlert(data.detail || 'Authentication failed', 'error');
+                }
+            } catch (error) {
+                showAlert('Connection error: ' + error.message, 'error');
+            }
+        });
+
+        // Validate session
+        async function validateSession() {
+            if (!sessionToken) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/validate`, {
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    loadDashboard(data);
+                } else {
+                    localStorage.removeItem('sessionToken');
+                    sessionToken = null;
+                }
+            } catch (error) {
+                console.error('Session validation error:', error);
+            }
+        }
+
+        // Load dashboard
+        async function loadDashboard(userData = null) {
+            const dashboardContent = document.getElementById('dashboardContent');
+            
+            if (!sessionToken) {
+                dashboardContent.innerHTML = `
+                    <div class="alert alert-info">
+                        Please login to view your dashboard.
+                    </div>
+                `;
+                return;
+            }
+            
+            dashboardContent.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
+            
+            try {
+                if (!userData) {
+                    const response = await fetch(`${API_BASE}/validate`, {
+                        headers: { 'Authorization': `Bearer ${sessionToken}` }
+                    });
+                    userData = await response.json();
+                }
+                
+                const expiresDate = new Date(userData.expires_at);
+                const now = new Date();
+                const timeLeft = Math.floor((expiresDate - now) / 60000); // minutes
+                
+                dashboardContent.innerHTML = `
+                    <div class="session-info">
+                        <h3>✅ Authenticated Session</h3>
+                        <div class="info-row">
+                            <span class="info-label">Username:</span>
+                            <span class="info-value">${userData.username}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Email:</span>
+                            <span class="info-value">${userData.email}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">User ID:</span>
+                            <span class="info-value">${userData.user_id}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Session Expires:</span>
+                            <span class="info-value">${timeLeft} minutes</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Device ID:</span>
+                            <span class="info-value">${deviceId}</span>
+                        </div>
+                        <button class="logout-btn" onclick="logout()">Logout</button>
+                    </div>
+                `;
+            } catch (error) {
+                dashboardContent.innerHTML = `
+                    <div class="alert alert-error">
+                        Failed to load dashboard: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Logout
+        async function logout() {
+            if (!sessionToken) return;
+            
+            try {
+                await fetch(`${API_BASE}/logout`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${sessionToken}` }
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+            
+            localStorage.removeItem('sessionToken');
+            sessionToken = null;
+            
+            showAlert('Logged out successfully', 'success');
+            document.getElementById('dashboardContent').innerHTML = `
+                <div class="alert alert-info">
+                    Please login to view your dashboard.
+                </div>
+            `;
+            
+            // Switch to login tab
+            document.querySelectorAll('.tab')[1].click();
+        }
+    </script>
+</body>
+</html>
