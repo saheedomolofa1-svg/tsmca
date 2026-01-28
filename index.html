@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TSMCA Authentication Client</title>
+    <title>TSMCA Multi-Channel Authentication</title>
     <style>
         * {
             margin: 0;
@@ -26,7 +26,7 @@
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             width: 100%;
-            max-width: 500px;
+            max-width: 550px;
             padding: 40px;
         }
 
@@ -44,6 +44,17 @@
         .header p {
             color: #666;
             font-size: 14px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #e7f3ff;
+            color: #0056b3;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin: 5px;
         }
 
         .tabs {
@@ -97,7 +108,7 @@
             font-size: 14px;
         }
 
-        input {
+        input, select {
             width: 100%;
             padding: 12px 15px;
             border: 2px solid #e0e0e0;
@@ -106,10 +117,43 @@
             transition: all 0.3s;
         }
 
-        input:focus {
+        input:focus, select:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .checkbox-item:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .checkbox-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         button {
@@ -125,7 +169,7 @@
             transition: all 0.3s;
         }
 
-        button:hover {
+        button:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
@@ -137,6 +181,11 @@
         button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+        }
+
+        .secondary-btn {
+            background: #6c757d;
+            margin-top: 10px;
         }
 
         .qr-container {
@@ -159,10 +208,7 @@
             border-radius: 8px;
             margin: 15px 0;
             word-break: break-all;
-        }
-
-        .secret-display strong {
-            color: #856404;
+            font-size: 12px;
         }
 
         .alert {
@@ -188,6 +234,12 @@
             background: #d1ecf1;
             color: #0c5460;
             border: 1px solid #bee5eb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
         }
 
         .session-info {
@@ -271,12 +323,41 @@
             line-height: 1.6;
         }
 
-        .instructions ol {
+        .instructions ol, .instructions ul {
             margin-left: 20px;
         }
 
         .instructions li {
             margin: 8px 0;
+        }
+
+        .channel-status {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-enabled {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-disabled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -284,7 +365,8 @@
     <div class="container">
         <div class="header">
             <h1>🔐 TSMCA Authentication</h1>
-            <p>Time-Synchronized Multi-Channel Authentication System</p>
+            <p>Multi-Channel Security System</p>
+            <div class="channel-status" id="channelStatus"></div>
         </div>
 
         <div id="alertContainer"></div>
@@ -298,28 +380,35 @@
         <!-- Registration Tab -->
         <div id="register" class="tab-content active">
             <div class="instructions">
-                <strong>Registration Instructions:</strong>
+                <strong>📝 Registration Steps:</strong>
                 <ol>
                     <li>Fill in your details below</li>
-                    <li>Install Google Authenticator or any TOTP app</li>
+                    <li>Optional: Add phone number for SMS verification</li>
+                    <li>Install Google Authenticator app on your phone</li>
                     <li>Scan the QR code that will be displayed</li>
-                    <li>Use the 6-digit code from your app to login</li>
+                    <li>Use the 6-digit code to login</li>
                 </ol>
             </div>
 
             <form id="registerForm">
                 <div class="form-group">
-                    <label for="regUsername">Username</label>
+                    <label for="regUsername">Username *</label>
                     <input type="text" id="regUsername" required placeholder="Enter username">
                 </div>
 
                 <div class="form-group">
-                    <label for="regEmail">Email</label>
+                    <label for="regEmail">Email *</label>
                     <input type="email" id="regEmail" required placeholder="Enter email">
                 </div>
 
                 <div class="form-group">
-                    <label for="regPassword">Password</label>
+                    <label for="regPhone">Phone Number (Optional - for SMS)</label>
+                    <input type="tel" id="regPhone" placeholder="+1234567890">
+                    <div class="help-text">Include country code (e.g., +1 for US)</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="regPassword">Password *</label>
                     <input type="password" id="regPassword" required placeholder="Enter password">
                 </div>
 
@@ -332,13 +421,12 @@
         <!-- Login Tab -->
         <div id="login" class="tab-content">
             <div class="instructions">
-                <strong>Login Instructions:</strong>
-                <ol>
-                    <li>Enter your username</li>
-                    <li>Open your authenticator app</li>
-                    <li>Enter the 6-digit code shown</li>
-                    <li>Code refreshes every 30 seconds</li>
-                </ol>
+                <strong>🔑 Multi-Channel Login:</strong>
+                <ul>
+                    <li><strong>App:</strong> Use Google Authenticator code</li>
+                    <li><strong>SMS:</strong> Receive code via text message</li>
+                    <li><strong>Email:</strong> Receive code in your inbox</li>
+                </ul>
             </div>
 
             <form id="loginForm">
@@ -348,8 +436,29 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="loginToken">6-Digit Authentication Code</label>
+                    <label>Verification Channels</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="channel" value="app" checked>
+                            <span>📱 Authenticator App (Always Available)</span>
+                        </label>
+                        <label class="checkbox-item" id="smsCheckbox">
+                            <input type="checkbox" name="channel" value="sms">
+                            <span>💬 SMS Verification</span>
+                        </label>
+                        <label class="checkbox-item" id="emailCheckbox">
+                            <input type="checkbox" name="channel" value="email">
+                            <span>📧 Email Verification</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="button" onclick="sendVerification()">Send Verification Code</button>
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="loginToken">6-Digit Verification Code</label>
                     <input type="text" id="loginToken" required placeholder="Enter 6-digit code" maxlength="6" pattern="[0-9]{6}">
+                    <div class="help-text">Code expires in 60 seconds</div>
                 </div>
 
                 <button type="submit">Authenticate</button>
@@ -371,11 +480,11 @@
     </div>
 
     <script>
-        const API_BASE = 'https://govtsmca.onrender.com/api/v1';
+        const API_BASE = 'https://govtamca.onrender.com/api/v1';
         let sessionToken = null;
         let deviceId = null;
+        let serverStatus = null;
 
-        // Generate or retrieve device ID
         function getDeviceId() {
             let id = localStorage.getItem('deviceId');
             if (!id) {
@@ -385,19 +494,50 @@
             return id;
         }
 
-        // Initialize
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(API_BASE.replace('/api/v1', ''));
+                const data = await response.json();
+                serverStatus = data.features;
+                
+                const statusDiv = document.getElementById('channelStatus');
+                statusDiv.innerHTML = 
+                    <span class="status-badge ${data.features.sms_verification ? 'status-enabled' : 'status-disabled'}">
+                        SMS: ${data.features.sms_verification ? '✅' : '❌'}
+                    </span>
+                    <span class="status-badge ${data.features.email_verification ? 'status-enabled' : 'status-disabled'}">
+                        Email: ${data.features.email_verification ? '✅' : '❌'}
+                    </span>
+                ;
+                
+                // Disable SMS checkbox if not available
+                if (!data.features.sms_verification) {
+                    const smsCheckbox = document.getElementById('smsCheckbox');
+                    smsCheckbox.classList.add('disabled');
+                    smsCheckbox.querySelector('input').disabled = true;
+                }
+                
+                // Disable Email checkbox if not available
+                if (!data.features.email_verification) {
+                    const emailCheckbox = document.getElementById('emailCheckbox');
+                    emailCheckbox.classList.add('disabled');
+                    emailCheckbox.querySelector('input').disabled = true;
+                }
+            } catch (error) {
+                console.error('Failed to check server status:', error);
+            }
+        }
         document.addEventListener('DOMContentLoaded', () => {
             deviceId = getDeviceId();
             document.getElementById('deviceId').textContent = deviceId;
+            checkServerStatus();
             
-            // Check for existing session
             sessionToken = localStorage.getItem('sessionToken');
             if (sessionToken) {
                 validateSession();
             }
         });
 
-        // Switch tabs
         function switchTab(tabName) {
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -406,16 +546,15 @@
             document.getElementById(tabName).classList.add('active');
         }
 
-        // Show alert
         function showAlert(message, type = 'info') {
             const alertContainer = document.getElementById('alertContainer');
             const alert = document.createElement('div');
-            alert.className = `alert alert-${type}`;
+            alert.className = alert alert-${type};
             alert.textContent = message;
             alertContainer.innerHTML = '';
             alertContainer.appendChild(alert);
             
-            setTimeout(() => alert.remove(), 5000);
+            setTimeout(() => alert.remove(), 7000);
         }
 
         // Register form
@@ -425,12 +564,18 @@
             const username = document.getElementById('regUsername').value;
             const email = document.getElementById('regEmail').value;
             const password = document.getElementById('regPassword').value;
+            const phone = document.getElementById('regPhone').value;
             
             try {
-                const response = await fetch(`${API_BASE}/register`, {
+                const response = await fetch(${API_BASE}/register, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email, password })
+                    body: JSON.stringify({ 
+                        username, 
+                        email, 
+                        password,
+                        phone_number: phone || null
+                    })
                 });
                 
                 const data = await response.json();
@@ -446,23 +591,69 @@
             }
         });
 
-        // Display QR code
         function displayQRCode(uri) {
             const qrDisplay = document.getElementById('qrDisplay');
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(uri)}`;
+            const qrUrl = https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(uri)};
             
-            qrDisplay.innerHTML = `
+            qrDisplay.innerHTML = 
                 <div class="qr-container">
-                    <h3>Scan this QR Code</h3>
+                    <h3>📱 Scan this QR Code</h3>
                     <img src="${qrUrl}" alt="QR Code">
-                    <p>Use Google Authenticator, Authy, or any TOTP app</p>
+                    <p><strong>Use:</strong> Google Authenticator, Authy, or any TOTP app</p>
                     <div class="secret-display">
                         <strong>Manual Entry:</strong><br>
                         ${uri}
                     </div>
+                    <div class="alert alert-info" style="margin-top: 15px;">
+                        After scanning, go to the <strong>Login</strong> tab to authenticate!
+                    </div>
                 </div>
-            `;
+            ;
             qrDisplay.style.display = 'block';
+        }
+
+        // Send verification codes
+        async function sendVerification() {
+            const username = document.getElementById('loginUsername').value;
+            if (!username) {
+                showAlert('Please enter your username first', 'warning');
+                return;
+            }
+            
+            const selectedChannels = Array.from(document.querySelectorAll('input[name="channel"]:checked'))
+                .map(cb => cb.value);
+            
+            if (selectedChannels.length === 0) {
+                showAlert('Please select at least one verification channel', 'warning');
+                return;
+            }
+            
+            try {
+                showAlert('Sending verification codes...', 'info');
+                
+                const response = await fetch(${API_BASE}/send-verification, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username,
+                        device_id: deviceId,
+                        channels: selectedChannels
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert(✅ Code sent via: ${data.channels_used.join(', ')}, 'success');
+                    if (data.channels_failed && data.channels_failed.length > 0) {
+                        showAlert(⚠️ Failed: ${data.channels_failed.join(', ')}, 'warning');
+                    }
+                } else {
+                    showAlert(data.detail || 'Failed to send verification code', 'error');
+                }
+            } catch (error) {
+                showAlert('Connection error: ' + error.message, 'error');
+            }
         }
 
         // Login form
@@ -478,7 +669,7 @@
             }
             
             try {
-                const response = await fetch(`${API_BASE}/authenticate`, {
+                const response = await fetch(${API_BASE}/authenticate, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -493,12 +684,10 @@
                 if (response.ok) {
                     sessionToken = data.session_token;
                     localStorage.setItem('sessionToken', sessionToken);
-                    showAlert('Authentication successful!', 'success');
+                    showAlert('✅ Authentication successful!', 'success');
                     
-                    // Clear form
                     document.getElementById('loginForm').reset();
                     
-                    // Switch to dashboard
                     setTimeout(() => {
                         document.querySelectorAll('.tab')[2].click();
                         loadDashboard();
@@ -511,14 +700,13 @@
             }
         });
 
-        // Validate session
         async function validateSession() {
             if (!sessionToken) return;
             
             try {
-                const response = await fetch(`${API_BASE}/validate`, {
+                const response = await fetch(${API_BASE}/validate, {
                     headers: {
-                        'Authorization': `Bearer ${sessionToken}`
+                        'Authorization': Bearer ${sessionToken}
                     }
                 });
                 
@@ -533,17 +721,15 @@
                 console.error('Session validation error:', error);
             }
         }
-
-        // Load dashboard
         async function loadDashboard(userData = null) {
             const dashboardContent = document.getElementById('dashboardContent');
             
             if (!sessionToken) {
-                dashboardContent.innerHTML = `
+                dashboardContent.innerHTML = 
                     <div class="alert alert-info">
                         Please login to view your dashboard.
                     </div>
-                `;
+                ;
                 return;
             }
             
@@ -551,17 +737,17 @@
             
             try {
                 if (!userData) {
-                    const response = await fetch(`${API_BASE}/validate`, {
-                        headers: { 'Authorization': `Bearer ${sessionToken}` }
+                    const response = await fetch(${API_BASE}/validate, {
+                        headers: { 'Authorization': Bearer ${sessionToken} }
                     });
                     userData = await response.json();
                 }
                 
                 const expiresDate = new Date(userData.expires_at);
                 const now = new Date();
-                const timeLeft = Math.floor((expiresDate - now) / 60000); // minutes
+                const timeLeft = Math.floor((expiresDate - now) / 60000);
                 
-                dashboardContent.innerHTML = `
+                dashboardContent.innerHTML = 
                     <div class="session-info">
                         <h3>✅ Authenticated Session</h3>
                         <div class="info-row">
@@ -571,6 +757,10 @@
                         <div class="info-row">
                             <span class="info-label">Email:</span>
                             <span class="info-value">${userData.email}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Phone:</span>
+                            <span class="info-value">${userData.phone_number || 'Not provided'}</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">User ID:</span>
@@ -586,24 +776,23 @@
                         </div>
                         <button class="logout-btn" onclick="logout()">Logout</button>
                     </div>
-                `;
+                ;
             } catch (error) {
-                dashboardContent.innerHTML = `
+                dashboardContent.innerHTML = 
                     <div class="alert alert-error">
                         Failed to load dashboard: ${error.message}
                     </div>
-                `;
+                ;
             }
         }
 
-        // Logout
         async function logout() {
             if (!sessionToken) return;
             
             try {
-                await fetch(`${API_BASE}/logout`, {
+                await fetch(${API_BASE}/logout, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${sessionToken}` }
+                    headers: { 'Authorization': Bearer ${sessionToken} }
                 });
             } catch (error) {
                 console.error('Logout error:', error);
@@ -613,13 +802,12 @@
             sessionToken = null;
             
             showAlert('Logged out successfully', 'success');
-            document.getElementById('dashboardContent').innerHTML = `
+            document.getElementById('dashboardContent').innerHTML = 
                 <div class="alert alert-info">
                     Please login to view your dashboard.
                 </div>
-            `;
+            ;
             
-            // Switch to login tab
             document.querySelectorAll('.tab')[1].click();
         }
     </script>
