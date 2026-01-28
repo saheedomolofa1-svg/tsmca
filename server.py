@@ -1,12 +1,7 @@
-"""
-TSMCA (Time-Synchronized Multi-Channel Authentication) System
-Main Server Application
-"""
-
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional
 import pyotp
 import secrets
@@ -15,13 +10,20 @@ import json
 from datetime import datetime, timedelta
 import sqlite3
 import uvicorn
-from pathlib import Path
+import os
+
+# Twilio for SMS
+from twilio.rest import Client as TwilioClient
+
+# SendGrid for Email
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 # Initialize FastAPI app
 app = FastAPI(
     title="TSMCA Authentication Server",
-    description="Time-Synchronized Multi-Channel Authentication System",
-    version="1.0.0"
+    description="Time-Synchronized Multi-Channel Authentication with SMS/Email",
+    version="2.0.0"
 )
 
 # CORS Configuration
@@ -39,17 +41,160 @@ security = HTTPBearer()
 # Database setup
 DB_PATH = "tsmca.db"
 
+# SMS Channel Implementation
+class SMSChannel:
+    def init(self):
+        self.account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
+        self.auth_token = os.environ.get('TWILIO_AUTH_TOKEN')
+        self.from_number = os.environ.get('TWILIO_PHONE_NUMBER')
+        
+        if self.account_sid and self.auth_token and self.from_number:
+            try:
+                self.client = TwilioClient(self.account_sid, self.auth_token)
+                self.enabled = True
+                print("✅ SMS Channel initialized successfully")
+            except Exception as e:
+                self.client = None
+                self.enabled = False
+                print(f"❌ SMS Channel initialization failed: {e}")
+        else:
+            self.client = None
+            self.enabled = False
+            print("⚠️  SMS Channel not configured (missing environment variables)")
+    
+    def send_verification_code(self, phone_number: str, code: str):
+        """Send OTP via SMS"""
+        if not self.enabled:
+            print("⚠️  SMS service not available")
+            return False
+            
+        try:
+            message = self.client.messages.create(
+                body=f"Your TSMCA verification code is: {code}\n\nValid for 60 seconds. Do not share this code with anyone.",
+                from_=self.from_number,
+                to=phone_number
+            )
+            print(f"✅ SMS sent successfully to {phone_number}: {message.sid}")
+            return True
+        except Exception as e:
+            print(f"❌ SMS delivery failed to {phone_number}: {str(e)}")
+            return False
+
+# Email Channel Implementation
+class EmailChannel:
+    def init(self):
+        self.api_key = os.environ.get('SENDGRID_API_KEY')
+        self.from_email = os.environ.get('SENDGRID_FROM_EMAIL', 'noreply@tsmca.com')
+        
+        if self.api_key:
+            try:
+                self.client = SendGridAPIClient(self.api_key)
+                self.enabled = True
+                print("✅ Email Channel initialized successfully")
+            except Exception as e:
+                self.client = None
+                self.enabled = False
+                print(f"❌ Email Channel initialization failed: {e}")
+        else:
+            self.client = None
+            self.enabled = False
+            print("⚠️  Email Channel not configured (missing API key)")
+    
+    def send_verification_code(self, to_email: str, code: str, username: str):
+        """Send OTP via email"""
+        if not self.enabled:
+            print("⚠️  Email service not available")
+            return False
+            
+        message = Mail(
+            from_email=self.from_email,
+            to_emails=to_email,
+            subject='🔐 TSMCA Security Verification Code',
+        html_content=f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }}
+                    .container {{ max-width: 600px; margin: 40px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
+                    .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; color: white; }}
+                    .header h1 {{ margin: 0; font-size: 28px; }}
+                    .content {{ padding: 40px 30px; }}
+                    .code-box {{ background: #f8f9fa; border: 3px solid #667eea; border-radius: 8px; padding: 25px; text-align: center; margin: 30px 0; }}
+                    .code {{ font-size: 36px; font-weight: bold; color: #667eea; letter-spacing: 10px; font-family: 'Courier New', monospace; }}
+                    .warning {{ background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; color: #856404; }}
+                    .footer {{ background: #f8f9fa; padding: 20px; text-align: center; color: #6c757d; font-size: 12px; }}
+                    .icon {{ font-size: 48px; margin-bottom: 10px; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <div class="icon">🔐</div>
+                        <h1>TSMCA Authentication</h1>
+                        <p>Secure Multi-Channel Verification</p>
+                    </div>
+                    <div class="content">
+                        <p style="font-size: 16px;">Hello <strong>{username}</strong>,</p>
+                        <p>We received a request to authenticate your account. Use the verification code below to complete your login:</p>
+                        
+                        <div class="code-box">
+                            <div style="color: #6c757d; font-size: 12px; margin-bottom: 10px;">VERIFICATION CODE</div>
+                            <div class="code">{code}</div>
+                            <div style="color: #6c757d; font-size: 12px; margin-top: 10px;">Enter this code in the authentication prompt</div>
+                        </div>
+                        
+                        <div class="warning">
+                            <strong>⏰ Important:</strong> This code expires in <strong>60 seconds</strong>.
+                        </div>
+                        
+                        <p style="margin-top: 30px;">If you did not request this code, please:</p>
+                        <ul>
+                            <li>Ignore this email</li>
+                            <li>Do not share this code with anyone</li>
+                            <li>Contact support if you suspect unauthorized access</li>
+                        </ul>
+                        
+                        <p style="margin-top: 30px; color: #6c757d; font-size: 14px;">
+                            <strong>Security Tips:</strong><br>
+                            • Never share your verification codes<br>
+                            • TSMCA will never ask for your code via phone or email<br>
+                            • Always verify the sender's email address
+                        </p>
+                    </div>
+                    <div class="footer">
+                        <p>This is an automated message from TSMCA Authentication System</p>
+                        <p>© 2026 TSMCA. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+        )
+        
+        try:
+            response = self.client.send(message)
+            print(f"✅ Email sent successfully to {to_email}: Status {response.status_code}")
+            return response.status_code == 202
+        except Exception as e:
+            print(f"❌ Email delivery failed to {to_email}: {str(e)}")
+            return False
+            # Initialize channels
+sms_channel = SMSChannel()
+email_channel = EmailChannel()
+
 def init_database():
     """Initialize SQLite database"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # Users table
+    # Users table with phone number
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             user_id TEXT PRIMARY KEY,
             username TEXT UNIQUE NOT NULL,
             email TEXT UNIQUE NOT NULL,
+            phone_number TEXT,
             shared_secret TEXT NOT NULL,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             last_login TEXT,
@@ -96,7 +241,22 @@ def init_database():
             device_id TEXT,
             auth_method TEXT,
             status TEXT,
-            failure_reason TEXT
+            failure_reason TEXT,
+            channels_used TEXT
+        )
+    """)
+    
+    # Verification codes table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS verification_codes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT,
+            code TEXT,
+            channel TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            expires_at TEXT,
+            used INTEGER DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES users(user_id)
         )
     """)
     
@@ -109,13 +269,19 @@ init_database()
 # Pydantic Models
 class UserRegistration(BaseModel):
     username: str
-    email: EmailStr
+    email: str
     password: str
+    phone_number: Optional[str] = None
 
 class AuthRequest(BaseModel):
     username: str
     device_id: str
     token: str
+
+class MultiChannelAuthRequest(BaseModel):
+    username: str
+    device_id: str
+    channels: list[str]  # ["sms", "email", "app"]
 
 class AuthResponse(BaseModel):
     success: bool
@@ -123,6 +289,7 @@ class AuthResponse(BaseModel):
     expires_at: Optional[str] = None
     message: str
     qr_code_data: Optional[str] = None
+    channels_used: Optional[list] = None
 
 class TokenVerification(BaseModel):
     username: str
@@ -130,36 +297,32 @@ class TokenVerification(BaseModel):
 
 # Helper Functions
 def generate_user_id():
-    """Generate unique user ID"""
     return secrets.token_hex(16)
 
 def generate_session_token():
-    """Generate secure session token"""
     return secrets.token_urlsafe(32)
 
 def hash_password(password: str) -> str:
-    """Hash password using SHA-256"""
     return hashlib.sha256(password.encode()).hexdigest()
 
 def get_db_connection():
-    """Get database connection"""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
-def log_auth_event(user_id: str, ip: str, device_id: str, method: str, status: str, reason: str = None):
+def log_auth_event(user_id: str, ip: str, device_id: str, method: str, status: str, reason: str = None, channels: list = None):
     """Log authentication event"""
     conn = get_db_connection()
     cursor = conn.cursor()
+    channels_str = ','.join(channels) if channels else None
     cursor.execute("""
-        INSERT INTO auth_logs (user_id, ip_address, device_id, auth_method, status, failure_reason)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (user_id, ip, device_id, method, status, reason))
+        INSERT INTO auth_logs (user_id, ip_address, device_id, auth_method, status, failure_reason, channels_used)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (user_id, ip, device_id, method, status, reason, channels_str))
     conn.commit()
     conn.close()
 
 def check_account_locked(user_id: str) -> bool:
-    """Check if account is locked"""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT locked_until FROM users WHERE user_id = ?", (user_id,))
@@ -171,7 +334,6 @@ def check_account_locked(user_id: str) -> bool:
         if datetime.utcnow() < locked_until:
             return True
         else:
-            # Unlock account
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute("UPDATE users SET locked_until = NULL, failed_attempts = 0 WHERE user_id = ?", (user_id,))
@@ -180,7 +342,6 @@ def check_account_locked(user_id: str) -> bool:
     return False
 
 def increment_failed_attempts(user_id: str):
-    """Increment failed login attempts and lock if necessary"""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT failed_attempts FROM users WHERE user_id = ?", (user_id,))
@@ -190,7 +351,6 @@ def increment_failed_attempts(user_id: str):
         failed_attempts = result['failed_attempts'] + 1
         
         if failed_attempts >= 5:
-            # Lock account for 15 minutes
             locked_until = (datetime.utcnow() + timedelta(minutes=15)).isoformat()
             cursor.execute("UPDATE users SET failed_attempts = ?, locked_until = ? WHERE user_id = ?",
                          (failed_attempts, locked_until, user_id))
@@ -202,7 +362,6 @@ def increment_failed_attempts(user_id: str):
     conn.close()
 
 def reset_failed_attempts(user_id: str):
-    """Reset failed login attempts"""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("UPDATE users SET failed_attempts = 0 WHERE user_id = ?", (user_id,))
@@ -210,7 +369,6 @@ def reset_failed_attempts(user_id: str):
     conn.close()
 
 def is_device_trusted(user_id: str, device_id: str) -> bool:
-    """Check if device is trusted"""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT device_id FROM trusted_devices WHERE user_id = ? AND device_id = ?",
@@ -220,7 +378,6 @@ def is_device_trusted(user_id: str, device_id: str) -> bool:
     return result is not None
 
 def add_trusted_device(user_id: str, device_id: str, device_type: str = "unknown"):
-    """Add device to trusted list"""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -238,7 +395,12 @@ async def root():
     return {
         "status": "online",
         "service": "TSMCA Authentication Server",
-        "version": "1.0.0",
+        "version": "2.0.0",
+        "features": {
+            "sms_verification": sms_channel.enabled,
+            "email_verification": email_channel.enabled,
+            "totp_authentication": True
+        },
         "timestamp": datetime.utcnow().isoformat()
     }
 
@@ -248,7 +410,6 @@ async def register_user(user: UserRegistration, request: Request):
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Check if username or email already exists
     cursor.execute("SELECT user_id FROM users WHERE username = ? OR email = ?",
                   (user.username, user.email))
     existing = cursor.fetchone()
@@ -257,21 +418,18 @@ async def register_user(user: UserRegistration, request: Request):
         conn.close()
         raise HTTPException(status_code=400, detail="Username or email already exists")
     
-    # Generate user ID and TOTP secret
     user_id = generate_user_id()
     totp_secret = pyotp.random_base32()
     password_hash = hash_password(user.password)
     
-    # Store user in database
     cursor.execute("""
-        INSERT INTO users (user_id, username, email, shared_secret)
-        VALUES (?, ?, ?, ?)
-    """, (user_id, user.username, user.email, totp_secret))
+        INSERT INTO users (user_id, username, email, phone_number, shared_secret)
+        VALUES (?, ?, ?, ?, ?)
+    """, (user_id, user.username, user.email, user.phone_number, totp_secret))
     
     conn.commit()
     conn.close()
     
-    # Generate QR code data for authenticator apps
     totp = pyotp.TOTP(totp_secret)
     qr_uri = totp.provisioning_uri(name=user.email, issuer_name="TSMCA Auth")
     
@@ -283,13 +441,70 @@ async def register_user(user: UserRegistration, request: Request):
         qr_code_data=qr_uri
     )
 
+@app.post("/api/v1/send-verification")
+async def send_verification(request_data: MultiChannelAuthRequest, request: Request):
+    """Send verification codes via specified channels"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM users WHERE username = ?", (request_data.username,))
+    user = cursor.fetchone()
+    
+    if not user:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user_id = user['user_id']
+    totp = pyotp.TOTP(user['shared_secret'])
+    verification_code = totp.now()
+    
+    channels_used = []
+    channels_failed = []
+    
+    # Send via requested channels
+    if "sms" in request_data.channels:
+        if user['phone_number']:
+            if sms_channel.send_verification_code(user['phone_number'], verification_code):
+                channels_used.append("SMS")
+            else:
+                channels_failed.append("SMS")
+        else:
+            channels_failed.append("SMS (no phone number)")
+    
+    if "email" in request_data.channels:
+        if email_channel.send_verification_code(user['email'], verification_code, user['username']):
+            channels_used.append("Email")
+        else:
+            channels_failed.append("Email")
+    
+    if "app" in request_data.channels:
+        channels_used.append("Authenticator App")
+    
+    conn.close()
+    
+    if not channels_used:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to send verification code. Failures: {', '.join(channels_failed)}"
+        )
+    
+    log_auth_event(user_id, request.client.host, request_data.device_id, 
+                  "MULTI_CHANNEL_VERIFICATION", "SENT", channels=channels_used)
+    
+    return {
+        "success": True,
+        "message": f"Verification code sent successfully",
+        "channels_used": channels_used,
+        "channels_failed": channels_failed if channels_failed else None,
+        "code_valid_for": "60 seconds"
+    }
+
 @app.post("/api/v1/authenticate", response_model=AuthResponse)
 async def authenticate(auth: AuthRequest, request: Request):
     """Authenticate user with TOTP token"""
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Get user by username
     cursor.execute("SELECT * FROM users WHERE username = ?", (auth.username,))
     user = cursor.fetchone()
     
@@ -299,13 +514,11 @@ async def authenticate(auth: AuthRequest, request: Request):
     
     user_id = user['user_id']
     
-    # Check if account is locked
     if check_account_locked(user_id):
         log_auth_event(user_id, request.client.host, auth.device_id, "TOTP", "FAILURE", "Account locked")
         conn.close()
         raise HTTPException(status_code=403, detail="Account is locked. Please try again later.")
     
-    # Verify TOTP token
     totp = pyotp.TOTP(user['shared_secret'])
     
     if not totp.verify(auth.token, valid_window=1):
@@ -313,28 +526,21 @@ async def authenticate(auth: AuthRequest, request: Request):
         log_auth_event(user_id, request.client.host, auth.device_id, "TOTP", "FAILURE", "Invalid token")
         conn.close()
         raise HTTPException(status_code=401, detail="Invalid authentication token")
+        reset_failed_attempts(user_id)
     
-    # Reset failed attempts on successful authentication
-    reset_failed_attempts(user_id)
-    
-    # Check device trust level
     device_trusted = is_device_trusted(user_id, auth.device_id)
     
     if not device_trusted:
-        # Add new device to trusted list
         add_trusted_device(user_id, auth.device_id)
     
-    # Generate session token
     session_token = generate_session_token()
     expires_at = (datetime.utcnow() + timedelta(hours=1)).isoformat()
     
-    # Store session
     cursor.execute("""
         INSERT INTO sessions (session_token, user_id, device_id, ip_address, expires_at)
         VALUES (?, ?, ?, ?, ?)
     """, (session_token, user_id, auth.device_id, request.client.host, expires_at))
     
-    # Update last login
     cursor.execute("UPDATE users SET last_login = ? WHERE user_id = ?",
                   (datetime.utcnow().isoformat(), user_id))
     
@@ -358,7 +564,7 @@ async def validate_session(credentials: HTTPAuthorizationCredentials = Depends(s
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT s.*, u.username, u.email 
+        SELECT s.*, u.username, u.email, u.phone_number
         FROM sessions s
         JOIN users u ON s.user_id = u.user_id
         WHERE s.session_token = ?
@@ -369,7 +575,6 @@ async def validate_session(credentials: HTTPAuthorizationCredentials = Depends(s
     if not session:
         raise HTTPException(status_code=401, detail="Invalid session token")
     
-    # Check expiration
     expires_at = datetime.fromisoformat(session['expires_at'])
     if datetime.utcnow() > expires_at:
         raise HTTPException(status_code=401, detail="Session expired")
@@ -379,6 +584,7 @@ async def validate_session(credentials: HTTPAuthorizationCredentials = Depends(s
         "user_id": session['user_id'],
         "username": session['username'],
         "email": session['email'],
+        "phone_number": session['phone_number'],
         "expires_at": session['expires_at']
     }
 
@@ -394,55 +600,6 @@ async def logout(credentials: HTTPAuthorizationCredentials = Depends(security)):
     conn.close()
     
     return {"success": True, "message": "Logged out successfully"}
-
-@app.get("/api/v1/users/{username}/devices")
-async def get_user_devices(username: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Get trusted devices for a user"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Get user ID from username
-    cursor.execute("SELECT user_id FROM users WHERE username = ?", (username,))
-    user = cursor.fetchone()
-    
-    if not user:
-        conn.close()
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    # Get devices
-    cursor.execute("""
-        SELECT device_id, device_type, trust_level, first_seen, last_used
-        FROM trusted_devices
-        WHERE user_id = ?
-    """, (user['user_id'],))
-    
-    devices = cursor.fetchall()
-    conn.close()
-    
-    return {
-        "username": username,
-        "devices": [dict(device) for device in devices]
-    }
-
-@app.post("/api/v1/verify-token")
-async def verify_token(verification: TokenVerification):
-    """Verify TOTP token without authentication (for testing)"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT shared_secret FROM users WHERE username = ?", (verification.username,))
-    user = cursor.fetchone()
-    conn.close()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    totp = pyotp.TOTP(user['shared_secret'])
-    is_valid = totp.verify(verification.token, valid_window=1)
-    
-    return {
-        "valid": is_valid,
-        "message": "Token is valid" if is_valid else "Token is invalid or expired"
-    }
 
 @app.get("/api/v1/stats")
 async def get_stats():
@@ -480,20 +637,25 @@ async def get_stats():
         "total_users": total_users,
         "active_sessions": active_sessions,
         "total_devices": total_devices,
+        "channels_status": {
+            "sms_enabled": sms_channel.enabled,
+            "email_enabled": email_channel.enabled
+        },
         "last_24h": {
             "successful_authentications": successful_auths_24h,
             "failed_authentications": failed_auths_24h
         }
     }
-
-if __name__ == "__main__":
+    if name == "main":
     import os
     port = int(os.environ.get("PORT", 8000))
     
     print("=" * 60)
-    print("TSMCA Authentication Server Starting...")
+    print("TSMCA Authentication Server v2.0 Starting...")
     print("=" * 60)
     print(f"Server will be available on port: {port}")
+    print(f"SMS Verification: {'✅ Enabled' if sms_channel.enabled else '❌ Disabled'}")
+    print(f"Email Verification: {'✅ Enabled' if email_channel.enabled else '❌ Disabled'}")
     print("API Documentation: /docs")
     print("=" * 60)
     
