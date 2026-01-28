@@ -155,7 +155,6 @@ class EmailChannel:
                     </div>
                 </body>
                 </html>
-}
             
             response = resend.Emails.send(params)
             print(f"✅ Email sent successfully to {to_email}: {response['id']}")
