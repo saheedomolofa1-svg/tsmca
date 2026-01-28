@@ -337,6 +337,7 @@
             margin: 15px 0;
             flex-wrap: wrap;
         }
+
         .status-badge {
             padding: 6px 12px;
             border-radius: 6px;
@@ -485,6 +486,10 @@
         let deviceId = null;
         let serverStatus = null;
 
+        // Add console logging
+        console.log('TSMCA Client Loaded');
+        console.log('API Base URL:', API_BASE);
+
         function getDeviceId() {
             let id = localStorage.getItem('deviceId');
             if (!id) {
@@ -501,14 +506,14 @@
                 serverStatus = data.features;
                 
                 const statusDiv = document.getElementById('channelStatus');
-                statusDiv.innerHTML = 
+                statusDiv.innerHTML = `
                     <span class="status-badge ${data.features.sms_verification ? 'status-enabled' : 'status-disabled'}">
                         SMS: ${data.features.sms_verification ? '✅' : '❌'}
                     </span>
                     <span class="status-badge ${data.features.email_verification ? 'status-enabled' : 'status-disabled'}">
                         Email: ${data.features.email_verification ? '✅' : '❌'}
                     </span>
-                ;
+                `;
                 
                 // Disable SMS checkbox if not available
                 if (!data.features.sms_verification) {
@@ -527,6 +532,7 @@
                 console.error('Failed to check server status:', error);
             }
         }
+
         document.addEventListener('DOMContentLoaded', () => {
             deviceId = getDeviceId();
             document.getElementById('deviceId').textContent = deviceId;
@@ -549,7 +555,7 @@
         function showAlert(message, type = 'info') {
             const alertContainer = document.getElementById('alertContainer');
             const alert = document.createElement('div');
-            alert.className = alert alert-${type};
+            alert.className = `alert alert-${type}`;
             alert.textContent = message;
             alertContainer.innerHTML = '';
             alertContainer.appendChild(alert);
@@ -566,8 +572,16 @@
             const password = document.getElementById('regPassword').value;
             const phone = document.getElementById('regPhone').value;
             
+            // Show loading
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Registering...';
+            
             try {
-                const response = await fetch(${API_BASE}/register, {
+                console.log('Attempting registration...', { username, email, phone });
+                
+                const response = await fetch(`${API_BASE}/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
@@ -578,24 +592,32 @@
                     })
                 });
                 
+                console.log('Response status:', response.status);
+                
                 const data = await response.json();
+                console.log('Response data:', data);
                 
                 if (response.ok) {
-                    showAlert('Registration successful! Scan the QR code below.', 'success');
+                    showAlert('✅ Registration successful! Scan the QR code below.', 'success');
                     displayQRCode(data.qr_code_data);
+                    e.target.reset(); // Clear form
                 } else {
-                    showAlert(data.detail || 'Registration failed', 'error');
+                    showAlert('❌ ' + (data.detail || 'Registration failed'), 'error');
                 }
             } catch (error) {
-                showAlert('Connection error: ' + error.message, 'error');
+                console.error('Registration error:', error);
+                showAlert('❌ Connection error: ' + error.message + '. Check console for details.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
             }
         });
 
         function displayQRCode(uri) {
             const qrDisplay = document.getElementById('qrDisplay');
-            const qrUrl = https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(uri)};
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(uri)}`;
             
-            qrDisplay.innerHTML = 
+            qrDisplay.innerHTML = `
                 <div class="qr-container">
                     <h3>📱 Scan this QR Code</h3>
                     <img src="${qrUrl}" alt="QR Code">
@@ -608,7 +630,7 @@
                         After scanning, go to the <strong>Login</strong> tab to authenticate!
                     </div>
                 </div>
-            ;
+            `;
             qrDisplay.style.display = 'block';
         }
 
@@ -631,7 +653,7 @@
             try {
                 showAlert('Sending verification codes...', 'info');
                 
-                const response = await fetch(${API_BASE}/send-verification, {
+                const response = await fetch(`${API_BASE}/send-verification`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -644,9 +666,9 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    showAlert(✅ Code sent via: ${data.channels_used.join(', ')}, 'success');
+                    showAlert(`✅ Code sent via: ${data.channels_used.join(', ')}`, 'success');
                     if (data.channels_failed && data.channels_failed.length > 0) {
-                        showAlert(⚠️ Failed: ${data.channels_failed.join(', ')}, 'warning');
+                        showAlert(`⚠️ Failed: ${data.channels_failed.join(', ')}`, 'warning');
                     }
                 } else {
                     showAlert(data.detail || 'Failed to send verification code', 'error');
@@ -669,7 +691,7 @@
             }
             
             try {
-                const response = await fetch(${API_BASE}/authenticate, {
+                const response = await fetch(`${API_BASE}/authenticate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -704,9 +726,9 @@
             if (!sessionToken) return;
             
             try {
-                const response = await fetch(${API_BASE}/validate, {
+                const response = await fetch(`${API_BASE}/validate`, {
                     headers: {
-                        'Authorization': Bearer ${sessionToken}
+                        'Authorization': `Bearer ${sessionToken}`
                     }
                 });
                 
@@ -721,15 +743,16 @@
                 console.error('Session validation error:', error);
             }
         }
+
         async function loadDashboard(userData = null) {
             const dashboardContent = document.getElementById('dashboardContent');
             
             if (!sessionToken) {
-                dashboardContent.innerHTML = 
+                dashboardContent.innerHTML = `
                     <div class="alert alert-info">
                         Please login to view your dashboard.
                     </div>
-                ;
+                `;
                 return;
             }
             
@@ -737,8 +760,8 @@
             
             try {
                 if (!userData) {
-                    const response = await fetch(${API_BASE}/validate, {
-                        headers: { 'Authorization': Bearer ${sessionToken} }
+                    const response = await fetch(`${API_BASE}/validate`, {
+                        headers: { 'Authorization': `Bearer ${sessionToken}` }
                     });
                     userData = await response.json();
                 }
@@ -747,7 +770,7 @@
                 const now = new Date();
                 const timeLeft = Math.floor((expiresDate - now) / 60000);
                 
-                dashboardContent.innerHTML = 
+                dashboardContent.innerHTML = `
                     <div class="session-info">
                         <h3>✅ Authenticated Session</h3>
                         <div class="info-row">
@@ -776,13 +799,13 @@
                         </div>
                         <button class="logout-btn" onclick="logout()">Logout</button>
                     </div>
-                ;
+                `;
             } catch (error) {
-                dashboardContent.innerHTML = 
+                dashboardContent.innerHTML = `
                     <div class="alert alert-error">
                         Failed to load dashboard: ${error.message}
                     </div>
-                ;
+                `;
             }
         }
 
@@ -790,9 +813,9 @@
             if (!sessionToken) return;
             
             try {
-                await fetch(${API_BASE}/logout, {
+                await fetch(`${API_BASE}/logout`, {
                     method: 'POST',
-                    headers: { 'Authorization': Bearer ${sessionToken} }
+                    headers: { 'Authorization': `Bearer ${sessionToken}` }
                 });
             } catch (error) {
                 console.error('Logout error:', error);
@@ -802,11 +825,11 @@
             sessionToken = null;
             
             showAlert('Logged out successfully', 'success');
-            document.getElementById('dashboardContent').innerHTML = 
+            document.getElementById('dashboardContent').innerHTML = `
                 <div class="alert alert-info">
                     Please login to view your dashboard.
                 </div>
-            ;
+            `;
             
             document.querySelectorAll('.tab')[1].click();
         }
