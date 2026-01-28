@@ -16,17 +16,17 @@ from datetime import datetime, timedelta
 import sqlite3
 import os
 
-# Initialize FastAPI
+# Initialize FastAPI FIRST
 app = FastAPI(
     title="TSMCA Authentication Server",
     description="Multi-Channel Authentication System",
     version="2.0.0"
 )
 
-# CORS
+# CORS - ALLOW ALL ORIGINS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Allow all origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
