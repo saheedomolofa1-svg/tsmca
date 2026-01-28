@@ -81,104 +81,89 @@ class SMSChannel:
             return False
 
 # Email Channel Implementation
+# Resend for Email (Simpler alternative to SendGrid)
+try:
+    import resend
+    RESEND_AVAILABLE = True
+except:
+    RESEND_AVAILABLE = False
+
 class EmailChannel:
     def init(self):
-        self.api_key = os.environ.get('SENDGRID_API_KEY')
-        self.from_email = os.environ.get('SENDGRID_FROM_EMAIL', 'noreply@tsmca.com')
+        self.api_key = os.environ.get('RESEND_API_KEY')
+        self.from_email = os.environ.get('EMAIL_FROM', 'onboarding@resend.dev')
         
-        if self.api_key:
+        if self.api_key and RESEND_AVAILABLE:
             try:
-                self.client = SendGridAPIClient(self.api_key)
+                resend.api_key = self.api_key
                 self.enabled = True
-                print("✅ Email Channel initialized successfully")
+                print("✅ Email Channel (Resend) initialized successfully")
             except Exception as e:
-                self.client = None
                 self.enabled = False
                 print(f"❌ Email Channel initialization failed: {e}")
         else:
-            self.client = None
             self.enabled = False
-            print("⚠️  Email Channel not configured (missing API key)")
+            print("⚠️  Email Channel not configured")
     
     def send_verification_code(self, to_email: str, code: str, username: str):
-        """Send OTP via email"""
+        """Send OTP via email using Resend"""
         if not self.enabled:
             print("⚠️  Email service not available")
             return False
             
-        message = Mail(
-            from_email=self.from_email,
-            to_emails=to_email,
-            subject='🔐 TSMCA Security Verification Code',
-        html_content=f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body {{ font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }}
-                    .container {{ max-width: 600px; margin: 40px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
-                    .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; color: white; }}
-                    .header h1 {{ margin: 0; font-size: 28px; }}
-                    .content {{ padding: 40px 30px; }}
-                    .code-box {{ background: #f8f9fa; border: 3px solid #667eea; border-radius: 8px; padding: 25px; text-align: center; margin: 30px 0; }}
-                    .code {{ font-size: 36px; font-weight: bold; color: #667eea; letter-spacing: 10px; font-family: 'Courier New', monospace; }}
-                    .warning {{ background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; color: #856404; }}
-                    .footer {{ background: #f8f9fa; padding: 20px; text-align: center; color: #6c757d; font-size: 12px; }}
-                    .icon {{ font-size: 48px; margin-bottom: 10px; }}
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <div class="icon">🔐</div>
-                        <h1>TSMCA Authentication</h1>
-                        <p>Secure Multi-Channel Verification</p>
-                    </div>
-                    <div class="content">
-                        <p style="font-size: 16px;">Hello <strong>{username}</strong>,</p>
-                        <p>We received a request to authenticate your account. Use the verification code below to complete your login:</p>
-                        
-                        <div class="code-box">
-                            <div style="color: #6c757d; font-size: 12px; margin-bottom: 10px;">VERIFICATION CODE</div>
-                            <div class="code">{code}</div>
-                            <div style="color: #6c757d; font-size: 12px; margin-top: 10px;">Enter this code in the authentication prompt</div>
-                        </div>
-                        
-                        <div class="warning">
-                            <strong>⏰ Important:</strong> This code expires in <strong>60 seconds</strong>.
-                        </div>
-                        
-                        <p style="margin-top: 30px;">If you did not request this code, please:</p>
-                        <ul>
-                            <li>Ignore this email</li>
-                            <li>Do not share this code with anyone</li>
-                            <li>Contact support if you suspect unauthorized access</li>
-                        </ul>
-                        
-                        <p style="margin-top: 30px; color: #6c757d; font-size: 14px;">
-                            <strong>Security Tips:</strong><br>
-                            • Never share your verification codes<br>
-                            • TSMCA will never ask for your code via phone or email<br>
-                            • Always verify the sender's email address
-                        </p>
-                    </div>
-                    <div class="footer">
-                        <p>This is an automated message from TSMCA Authentication System</p>
-                        <p>© 2026 TSMCA. All rights reserved.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
-        )
-        
         try:
-            response = self.client.send(message)
-            print(f"✅ Email sent successfully to {to_email}: Status {response.status_code}")
-            return response.status_code == 202
+            params = {
+                "from": self.from_email,
+                "to": [to_email],
+                "subject": "🔐 TSMCA Security Verification Code",
+                "html": f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body {{ font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }}
+                        .container {{ max-width: 600px; margin: 40px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
+                        .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; color: white; }}
+                        .header h1 {{ margin: 0; font-size: 28px; }}
+                        .content {{ padding: 40px 30px; }}
+                        .code-box {{ background: #f8f9fa; border: 3px solid #667eea; border-radius: 8px; padding: 25px; text-align: center; margin: 30px 0; }}
+                        .code {{ font-size: 36px; font-weight: bold; color: #667eea; letter-spacing: 10px; font-family: 'Courier New', monospace; }}
+                        .warning {{ background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; color: #856404; }}
+                        .footer {{ background: #f8f9fa; padding: 20px; text-align: center; color: #6c757d; font-size: 12px; }}
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <div style="font-size: 48px; margin-bottom: 10px;">🔐</div>
+                            <h1>TSMCA Authentication</h1>
+                        </div>
+                        <div class="content">
+                            <p style="font-size: 16px;">Hello <strong>{username}</strong>,</p>
+                            <p>Your verification code is:</p>
+                            <div class="code-box">
+                                <div class="code">{code}</div>
+                            </div>
+                            <div class="warning">
+                                <strong>⏰ Important:</strong> This code expires in <strong>60 seconds</strong>.
+                            </div>
+                            <p>If you didn't request this, please ignore this email.</p>
+                        </div>
+                        <div class="footer">
+                            <p>© 2026 TSMCA Authentication System</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+}
+            
+            response = resend.Emails.send(params)
+            print(f"✅ Email sent successfully to {to_email}: {response['id']}")
+            return True
         except Exception as e:
             print(f"❌ Email delivery failed to {to_email}: {str(e)}")
             return False
+
             # Initialize channels
 sms_channel = SMSChannel()
 email_channel = EmailChannel()
