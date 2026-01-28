@@ -4,3 +4,5 @@ pyotp>=2.9.0
 pydantic>=2.0.0
 email-validator>=2.0.0
 python-multipart>=0.0.6
+twilio>=8.10.0
+resend>=0.7.0
