@@ -98,6 +98,7 @@ def init(self):
         else:
             self.enabled = False
             print("⚠️  Email Channel not configured (missing API key)")
+            
 def send_verification_code(self, to_email: str, code: str, username: str):
         """Send OTP via email using Resend"""
         if not self.enabled:
