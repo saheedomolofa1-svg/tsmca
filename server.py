@@ -116,7 +116,7 @@ class EmailChannel:
                 "from": self.from_email,
                 "to": [to_email],
                 "subject": "🔐 TSMCA Security Verification Code",
-                "html": f"""
+                "html": f
                 <!DOCTYPE html>
                 <html>
                 <head>
