@@ -24,33 +24,6 @@ app = FastAPI(
 )
 
 # CORS Configuration - Allow all origins
-from fastapi.responses import JSONResponse
-
-@app.middleware("http")
-async def cors_middleware(request: Request, call_next):
-    response = await call_next(request)
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "*"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    return response
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-@app.options("/{rest_of_path:path}")
-async def preflight_handler(request: Request, rest_of_path: str):
-    response = JSONResponse(content={"message": "OK"})
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "*"
-    return response
-)
 
 security = HTTPBearer()
 DB_PATH = "tsmca.db"
@@ -497,6 +470,27 @@ async def stats():
             "failed_authentications": failed_24h
         }
     }
+    from fastapi.responses import HTMLResponse
+import os
+
+@app.get("/app", response_class=HTMLResponse)
+async def get_app():
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>TSMCA Auth</title>
+    </head>
+    <body>
+        <h1>TSMCA Working!</h1>
+        <p>If you see this, the server is running.</p>
+        <p><a href="/docs">Go to API Docs</a></p>
+    </body>
+    </html>
+    """
+    return html_content
 
 if __name__ == "__main__":
     import uvicorn
