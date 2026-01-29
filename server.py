@@ -470,27 +470,12 @@ async def stats():
             "failed_authentications": failed_24h
         }
     }
-    from fastapi.responses import HTMLResponse
-import os
+from fastapi.responses import HTMLResponse
 
-@app.get("/app", response_class=HTMLResponse)
-async def get_app():
-    html_content = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>TSMCA Auth</title>
-    </head>
-    <body>
-        <h1>TSMCA Working!</h1>
-        <p>If you see this, the server is running.</p>
-        <p><a href="/docs">Go to API Docs</a></p>
-    </body>
-    </html>
-    """
-    return html_content
+@app.get("/client", response_class=HTMLResponse)
+async def serve_client():
+    with open("index.html", "r") as f:
+        return f.read()    
 
 if __name__ == "__main__":
     import uvicorn
