@@ -472,10 +472,18 @@ async def stats():
     }
 from fastapi.responses import HTMLResponse
 
-@app.get("/client", response_class=HTMLResponse)
+@app.get("/app", response_class=HTMLResponse)
 async def serve_client():
-    with open("index.html", "r") as f:
-        return f.read()    
+    try:
+        with open("index.html", "r", encoding="utf-8") as f:
+            html_content = f.read()
+        html_content = html_content.replace(
+            "const API_BASE = 'https://govtamca.onrender.com/api/v1';",
+            "const API_BASE = '/api/v1';"
+        )
+        return html_content
+    except FileNotFoundError:
+        return HTMLResponse(content="<h1>Client file not found</h1>", status_code=404) 
 
 if __name__ == "__main__":
     import uvicorn
