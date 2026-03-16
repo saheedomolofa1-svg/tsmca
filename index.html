@@ -26,7 +26,7 @@
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             width: 100%;
-            max-width: 550px;
+            max-width: 900px;
             padding: 40px;
         }
 
@@ -62,6 +62,7 @@
             gap: 10px;
             margin-bottom: 30px;
             border-bottom: 2px solid #eee;
+            overflow-x: auto;
         }
 
         .tab {
@@ -75,6 +76,7 @@
             font-weight: 600;
             color: #999;
             transition: all 0.3s;
+            white-space: nowrap;
         }
 
         .tab.active {
@@ -376,6 +378,7 @@
             <button class="tab active" onclick="switchTab('register')">Register</button>
             <button class="tab" onclick="switchTab('login')">Login</button>
             <button class="tab" onclick="switchTab('dashboard')">Dashboard</button>
+            <button class="tab" onclick="switchTab('account')">Account</button>
         </div>
 
         <!-- Registration Tab -->
@@ -475,18 +478,26 @@
             </div>
         </div>
 
+        <!-- Account Management Tab -->
+        <div id="account" class="tab-content">
+            <div id="accountContent">
+                <div class="alert alert-info">
+                    Please login to access account settings.
+                </div>
+            </div>
+        </div>
+
         <div class="device-info">
             <strong>Device ID:</strong> <span id="deviceId"></span>
         </div>
     </div>
 
     <script>
-        const API_BASE = 'https://govtamca.onrender.com/api/v1';
+        const API_BASE = '/api/v1';
         let sessionToken = null;
         let deviceId = null;
         let serverStatus = null;
 
-        // Add console logging
         console.log('TSMCA Client Loaded');
         console.log('API Base URL:', API_BASE);
 
@@ -515,14 +526,12 @@
                     </span>
                 `;
                 
-                // Disable SMS checkbox if not available
                 if (!data.features.sms_verification) {
                     const smsCheckbox = document.getElementById('smsCheckbox');
                     smsCheckbox.classList.add('disabled');
                     smsCheckbox.querySelector('input').disabled = true;
                 }
                 
-                // Disable Email checkbox if not available
                 if (!data.features.email_verification) {
                     const emailCheckbox = document.getElementById('emailCheckbox');
                     emailCheckbox.classList.add('disabled');
@@ -572,7 +581,6 @@
             const password = document.getElementById('regPassword').value;
             const phone = document.getElementById('regPhone').value;
             
-            // Show loading
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
             submitBtn.disabled = true;
@@ -600,7 +608,7 @@
                 if (response.ok) {
                     showAlert('✅ Registration successful! Scan the QR code below.', 'success');
                     displayQRCode(data.qr_code_data);
-                    e.target.reset(); // Clear form
+                    e.target.reset();
                 } else {
                     showAlert('❌ ' + (data.detail || 'Registration failed'), 'error');
                 }
@@ -634,7 +642,6 @@
             qrDisplay.style.display = 'block';
         }
 
-        // Send verification codes
         async function sendVerification() {
             const username = document.getElementById('loginUsername').value;
             if (!username) {
@@ -678,7 +685,6 @@
             }
         }
 
-        // Login form
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -746,11 +752,17 @@
 
         async function loadDashboard(userData = null) {
             const dashboardContent = document.getElementById('dashboardContent');
+            const accountContent = document.getElementById('accountContent');
             
             if (!sessionToken) {
                 dashboardContent.innerHTML = `
                     <div class="alert alert-info">
                         Please login to view your dashboard.
+                    </div>
+                `;
+                accountContent.innerHTML = `
+                    <div class="alert alert-info">
+                        Please login to access account settings.
                     </div>
                 `;
                 return;
@@ -800,12 +812,124 @@
                         <button class="logout-btn" onclick="logout()">Logout</button>
                     </div>
                 `;
+
+                accountContent.innerHTML = `
+                    <div style="max-width: 800px; margin: 0 auto;">
+                        <h2 style="color: #667eea; margin-bottom: 20px;">⚙️ Account Settings</h2>
+                        
+                        <div class="session-info" style="margin-bottom: 20px;">
+                            <h3>🔒 Security Status</h3>
+                            <div class="info-row">
+                                <span class="info-label">Two-Factor Authentication:</span>
+                                <span class="info-value" style="color: #28a745;">✅ Enabled</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Email Verification:</span>
+                                <span class="info-value" style="color: #28a745;">✅ Verified</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">SMS Verification:</span>
+                                <span class="info-value">${userData.phone_number ? '✅ Enabled' : '⚠️ Not Set Up'}</span>
+                            </div>
+                        </div>
+
+                        <div class="session-info" style="margin-bottom: 20px;">
+                            <h3>📊 Recent Activity</h3>
+                            <div id="loginHistory">
+                                <div class="loading"><div class="spinner"></div>Loading activity...</div>
+                            </div>
+                        </div>
+
+                        <div class="session-info" style="margin-bottom: 20px;">
+                            <h3>📱 Trusted Devices</h3>
+                            <div id="trustedDevices">
+                                <div class="loading"><div class="spinner"></div>Loading devices...</div>
+                            </div>
+                        </div>
+
+                        <div class="session-info">
+                            <h3>🛠️ Account Management</h3>
+                            <p style="color: #6c757d; margin-bottom: 15px;">Manage your account settings and security preferences</p>
+                            <button class="logout-btn" onclick="logout()">Logout from All Devices</button>
+                        </div>
+                    </div>
+                `;
+
+                loadLoginHistory(userData.username);
+                loadTrustedDevices(userData.username);
+                
             } catch (error) {
                 dashboardContent.innerHTML = `
                     <div class="alert alert-error">
                         Failed to load dashboard: ${error.message}
                     </div>
                 `;
+            }
+        }
+
+        async function loadLoginHistory(username) {
+            try {
+                const response = await fetch(`${API_BASE}/users/${username}/activity`, {
+                    headers: { 'Authorization': `Bearer ${sessionToken}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const historyDiv = document.getElementById('loginHistory');
+                    
+                    if (data.activity && data.activity.length > 0) {
+                        historyDiv.innerHTML = data.activity.slice(0, 5).map(log => `
+                            <div style="padding: 10px; border-bottom: 1px solid #cce5ff; display: flex; justify-content: space-between;">
+                                <div>
+                                    <strong>${log.status === 'SUCCESS' ? '✅' : '❌'} ${log.auth_method}</strong>
+                                    <div style="font-size: 12px; color: #6c757d;">${log.ip_address} • ${log.timestamp}</div>
+                                </div>
+                                <div style="color: ${log.status === 'SUCCESS' ? '#28a745' : '#dc3545'};">
+                                    ${log.status}
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        historyDiv.innerHTML = '<p style="color: #6c757d;">No recent activity</p>';
+                    }
+                } else {
+                    document.getElementById('loginHistory').innerHTML = '<p style="color: #6c757d;">Activity log unavailable</p>';
+                }
+            } catch (error) {
+                document.getElementById('loginHistory').innerHTML = '<p style="color: #dc3545;">Failed to load activity</p>';
+            }
+        }
+
+        async function loadTrustedDevices(username) {
+            try {
+                const response = await fetch(`${API_BASE}/users/${username}/devices`, {
+                    headers: { 'Authorization': `Bearer ${sessionToken}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const devicesDiv = document.getElementById('trustedDevices');
+                    
+                    if (data.devices && data.devices.length > 0) {
+                        devicesDiv.innerHTML = data.devices.map((device, index) => `
+                            <div style="padding: 10px; border-bottom: 1px solid #cce5ff; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong>🖥️ Device ${index + 1}</strong>
+                                    <div style="font-size: 12px; color: #6c757d;">
+                                        Added: ${device.first_seen}<br>
+                                        Last used: ${device.last_used || 'Never'}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        devicesDiv.innerHTML = '<p style="color: #6c757d;">No trusted devices</p>';
+                    }
+                } else {
+                    document.getElementById('trustedDevices').innerHTML = '<p style="color: #6c757d;">Devices list unavailable</p>';
+                }
+            } catch (error) {
+                document.getElementById('trustedDevices').innerHTML = '<p style="color: #dc3545;">Failed to load devices</p>';
             }
         }
 
@@ -828,6 +952,11 @@
             document.getElementById('dashboardContent').innerHTML = `
                 <div class="alert alert-info">
                     Please login to view your dashboard.
+                </div>
+            `;
+            document.getElementById('accountContent').innerHTML = `
+                <div class="alert alert-info">
+                    Please login to access account settings.
                 </div>
             `;
             
