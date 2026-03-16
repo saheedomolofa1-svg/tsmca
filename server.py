@@ -1,8 +1,3 @@
-"""
-TSMCA Authentication System - Clean Version
-SMS: Twilio | Email: Resend
-"""
-
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,14 +11,21 @@ from datetime import datetime, timedelta
 import sqlite3
 import os
 
-# Initialize FastAPI FIRST
+# Initialize FastAPI
 app = FastAPI(
     title="TSMCA Authentication Server",
     description="Multi-Channel Authentication System",
     version="2.0.0"
 )
 
-# CORS Configuration - Allow all origins
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 security = HTTPBearer()
 DB_PATH = "tsmca.db"
@@ -439,6 +441,50 @@ async def logout(credentials: HTTPAuthorizationCredentials = Depends(security)):
     conn.close()
     return {"success": True, "message": "Logged out"}
 
+@app.get("/api/v1/users/{username}/devices")
+async def get_user_devices(username: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Get trusted devices for a user"""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT user_id FROM users WHERE username = ?", (username,))
+    user = c.fetchone()
+    
+    if not user:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    c.execute("""SELECT device_id, device_type, trust_level, first_seen, last_used
+        FROM trusted_devices WHERE user_id = ?""", (user['user_id'],))
+    devices = c.fetchall()
+    conn.close()
+    
+    return {
+        "username": username,
+        "devices": [dict(device) for device in devices]
+    }
+
+@app.get("/api/v1/users/{username}/activity")
+async def get_user_activity(username: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Get user's recent authentication activity"""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT user_id FROM users WHERE username = ?", (username,))
+    user = c.fetchone()
+    
+    if not user:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    c.execute("""SELECT timestamp, ip_address, device_id, auth_method, status, failure_reason, channels_used
+        FROM auth_logs WHERE user_id = ? ORDER BY timestamp DESC LIMIT 20""", (user['user_id'],))
+    logs = c.fetchall()
+    conn.close()
+    
+    return {
+        "username": username,
+        "activity": [dict(log) for log in logs]
+    }
+
 @app.get("/api/v1/stats")
 async def stats():
     conn = get_db()
@@ -470,6 +516,7 @@ async def stats():
             "failed_authentications": failed_24h
         }
     }
+
 from fastapi.responses import HTMLResponse
 
 @app.get("/app", response_class=HTMLResponse)
@@ -477,13 +524,53 @@ async def serve_client():
     try:
         with open("index.html", "r", encoding="utf-8") as f:
             html_content = f.read()
+        # Replace API_BASE to use relative path (same domain)
         html_content = html_content.replace(
             "const API_BASE = 'https://govtamca.onrender.com/api/v1';",
             "const API_BASE = '/api/v1';"
         )
         return html_content
     except FileNotFoundError:
-        return HTMLResponse(content="<h1>Client file not found</h1>", status_code=404) 
+        return HTMLResponse(content="<h1>Client file not found. Please ensure index.html is in the repository.</h1>", status_code=404)
+
+@app.get("/admin", response_class=HTMLResponse)
+async def serve_admin():
+    """Serve admin dashboard"""
+    try:
+        with open("admin.html", "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        # Return inline admin panel if file doesn't exist
+        return HTMLResponse(content="""
+        <html><body style="font-family: Arial; padding: 40px; text-align: center;">
+            <h1>🛡️ Admin Dashboard</h1>
+            <p>Admin panel file not found. Please add admin.html to the repository.</p>
+            <p><a href="/docs" style="color: #667eea;">Go to API Documentation</a></p>
+        </body></html>
+        """)
+
+@app.get("/api/v1/admin/recent-activity")
+async def admin_recent_activity():
+    """Get recent authentication activity for admin"""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""SELECT a.timestamp, u.username, a.auth_method, a.ip_address, a.status
+        FROM auth_logs a LEFT JOIN users u ON a.user_id = u.user_id
+        ORDER BY a.timestamp DESC LIMIT 50""")
+    activity = c.fetchall()
+    conn.close()
+    return {"activity": [dict(row) for row in activity]}
+
+@app.get("/api/v1/admin/users")
+async def admin_users():
+    """Get all users for admin"""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""SELECT user_id, username, email, phone_number, created_at, last_login, account_status
+        FROM users ORDER BY created_at DESC""")
+    users = c.fetchall()
+    conn.close()
+    return {"users": [dict(row) for row in users]}
 
 if __name__ == "__main__":
     import uvicorn
