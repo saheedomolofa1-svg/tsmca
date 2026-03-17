@@ -5,11 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TSMCA Multi-Channel Authentication</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -24,38 +20,15 @@
         .container {
             background: white;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             width: 100%;
             max-width: 900px;
             padding: 40px;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            color: #333;
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .badge {
-            display: inline-block;
-            background: #e7f3ff;
-            color: #0056b3;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            margin: 5px;
-        }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #333; font-size: 28px; margin-bottom: 10px; }
+        .header p { color: #666; font-size: 14px; }
 
         .tabs {
             display: flex;
@@ -77,30 +50,21 @@
             color: #999;
             transition: all 0.3s;
             white-space: nowrap;
+            width: auto;
         }
 
-        .tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-        }
+        .tab.active { color: #667eea; border-bottom-color: #667eea; }
+        .tab:hover:not(:disabled) { transform: none; box-shadow: none; color: #667eea; }
 
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.3s;
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
-        .form-group {
-            margin-bottom: 20px;
-        }
+        .form-group { margin-bottom: 20px; }
 
         label {
             display: block;
@@ -122,15 +86,10 @@
         input:focus, select:focus {
             outline: none;
             border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
         }
 
-        .checkbox-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 15px 0;
-        }
+        .checkbox-group { display: flex; flex-direction: column; gap: 10px; margin: 15px 0; }
 
         .checkbox-item {
             display: flex;
@@ -141,22 +100,9 @@
             cursor: pointer;
             transition: all 0.3s;
         }
-
-        .checkbox-item:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
-        }
-
-        .checkbox-item input[type="checkbox"] {
-            width: auto;
-            margin-right: 10px;
-            cursor: pointer;
-        }
-
-        .checkbox-item.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        .checkbox-item:hover { border-color: #667eea; background: #f8f9ff; }
+        .checkbox-item input[type="checkbox"] { width: auto; margin-right: 10px; cursor: pointer; }
+        .checkbox-item.disabled { opacity: 0.5; cursor: not-allowed; }
 
         button {
             width: 100%;
@@ -170,39 +116,14 @@
             cursor: pointer;
             transition: all 0.3s;
         }
+        button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102,126,234,0.4); }
+        button:active { transform: translateY(0); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
+        .secondary-btn { background: #6c757d; margin-top: 10px; }
 
-        button:active {
-            transform: translateY(0);
-        }
-
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .secondary-btn {
-            background: #6c757d;
-            margin-top: 10px;
-        }
-
-        .qr-container {
-            text-align: center;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-
-        .qr-container img {
-            max-width: 250px;
-            margin: 20px auto;
-            display: block;
-        }
+        .qr-container { text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px; margin: 20px 0; }
+        .qr-container img { max-width: 250px; margin: 20px auto; display: block; }
 
         .secret-display {
             background: #fff3cd;
@@ -213,755 +134,857 @@
             font-size: 12px;
         }
 
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error   { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .alert-info    { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .alert-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+
+        .session-info { background: #e7f3ff; padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .session-info h3 { color: #0056b3; margin-bottom: 15px; }
+
+        .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #cce5ff; }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { font-weight: 600; color: #495057; }
+        .info-value { color: #0056b3; }
+
+        .logout-btn { background: #dc3545; margin-top: 15px; }
+        .logout-btn:hover:not(:disabled) { background: #c82333; box-shadow: 0 5px 15px rgba(220,53,69,0.4); }
+
+        .device-info { font-size: 12px; color: #666; text-align: center; margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 8px; }
+
+        .loading { text-align: center; padding: 20px; color: #667eea; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .instructions { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; font-size: 13px; line-height: 1.6; }
+        .instructions ol, .instructions ul { margin-left: 20px; }
+        .instructions li { margin: 8px 0; }
+
+        .channel-status { display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
+        .status-badge { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+        .status-enabled  { background: #d4edda; color: #155724; }
+        .status-disabled { background: #f8d7da; color: #721c24; }
+
+        .help-text { font-size: 12px; color: #6c757d; margin-top: 5px; }
+
+        /* ══════════════════════════════════════════════════
+           ACCOUNT TAB — new styles
+           ══════════════════════════════════════════════════ */
+        .account-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 8px;
+        }
+        @media (max-width: 650px) { .account-grid { grid-template-columns: 1fr; } }
+
+        .account-card {
+            background: #fff;
+            border: 1.5px solid #e8eaed;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .account-card h3 {
             font-size: 14px;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .alert-info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .alert-warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-        }
-
-        .session-info {
-            background: #e7f3ff;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-
-        .session-info h3 {
-            color: #0056b3;
-            margin-bottom: 15px;
-        }
-
-        .info-row {
+            font-weight: 700;
+            color: #5c6bc0;
+            margin: 0 0 16px 0;
             display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #cce5ff;
+            align-items: center;
+            gap: 7px;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 12px;
         }
+        .span-full { grid-column: 1 / -1; }
 
-        .info-row:last-child {
-            border-bottom: none;
+        /* Small form inside account cards */
+        .acc-group { margin-bottom: 13px; }
+        .acc-group label { display: block; font-size: 11px; font-weight: 700; color: #888; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+        .acc-group input {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1.5px solid #dde1e7;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #333;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+            background: #fafafa;
         }
+        .acc-group input:focus { outline: none; border-color: #667eea; background: #fff; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
 
-        .info-label {
-            font-weight: 600;
-            color: #495057;
-        }
-
-        .info-value {
-            color: #0056b3;
-        }
-
-        .logout-btn {
-            background: #dc3545;
-            margin-top: 15px;
-        }
-
-        .logout-btn:hover {
-            background: #c82333;
-        }
-
-        .device-info {
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-            margin-top: 20px;
+        .btn-acc {
+            width: 100%;
             padding: 10px;
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
             border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 4px;
+            transition: all 0.2s;
         }
+        .btn-acc:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+        .btn-acc:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #667eea;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .instructions {
-            background: #f8f9fa;
-            padding: 15px;
+        .btn-danger-full {
+            width: 100%;
+            padding: 10px;
+            background: #dc3545;
+            color: #fff;
+            border: none;
             border-radius: 8px;
-            margin: 15px 0;
-            font-size: 13px;
-            line-height: 1.6;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.2s;
         }
+        .btn-danger-full:hover:not(:disabled) { background: #c82333; transform: translateY(-1px); }
+        .btn-danger-full:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-        .instructions ol, .instructions ul {
-            margin-left: 20px;
-        }
-
-        .instructions li {
-            margin: 8px 0;
-        }
-
-        .channel-status {
-            display: flex;
-            gap: 10px;
-            margin: 15px 0;
-            flex-wrap: wrap;
-        }
-
-        .status-badge {
-            padding: 6px 12px;
+        .btn-revoke {
+            padding: 4px 10px;
+            background: transparent;
+            color: #dc3545;
+            border: 1.5px solid #dc3545;
             border-radius: 6px;
             font-size: 12px;
             font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+            width: auto;
+            transition: all 0.15s;
         }
+        .btn-revoke:hover { background: #dc3545; color: #fff; transform: none; box-shadow: none; }
+        .btn-revoke:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        .status-enabled {
-            background: #d4edda;
-            color: #155724;
+        /* Device / Session list rows */
+        .item-list { display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; padding-right: 2px; }
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fb;
+            border: 1.5px solid #eee;
+            border-radius: 8px;
+            padding: 10px 12px;
+            gap: 8px;
         }
+        .item-row.is-current { border-color: #667eea; background: #f0f2ff; }
+        .item-info { flex: 1; min-width: 0; }
+        .item-name { font-size: 13px; font-weight: 700; color: #333; display: flex; align-items: center; gap: 6px; }
+        .current-badge { font-size: 10px; background: #667eea; color: #fff; padding: 2px 7px; border-radius: 10px; font-weight: 700; }
+        .item-meta { font-size: 11px; color: #888; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        .status-disabled {
-            background: #f8d7da;
-            color: #721c24;
+        /* Inline feedback */
+        .acc-feedback {
+            font-size: 13px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
         }
+        .acc-feedback.ok  { background: #d4edda; color: #155724; display: block; }
+        .acc-feedback.err { background: #f8d7da; color: #721c24; display: block; }
 
-        .help-text {
-            font-size: 12px;
-            color: #6c757d;
-            margin-top: 5px;
-        }
+        /* Security status row */
+        .sec-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e0e7ff; font-size: 14px; }
+        .sec-row:last-child { border-bottom: none; }
+        .sec-label { color: #495057; font-weight: 500; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🔐 TSMCA Authentication</h1>
-            <p>Multi-Channel Security System</p>
-            <div class="channel-status" id="channelStatus"></div>
+<div class="container">
+    <div class="header">
+        <h1>🔐 TSMCA Authentication</h1>
+        <p>Multi-Channel Security System</p>
+        <div class="channel-status" id="channelStatus"></div>
+    </div>
+
+    <div id="alertContainer"></div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('register', this)">Register</button>
+        <button class="tab" onclick="switchTab('login', this)">Login</button>
+        <button class="tab" onclick="switchTab('dashboard', this)">Dashboard</button>
+        <button class="tab" onclick="switchTab('account', this)">Account</button>
+    </div>
+
+    <!-- ── Register ── -->
+    <div id="register" class="tab-content active">
+        <div class="instructions">
+            <strong>📝 Registration Steps:</strong>
+            <ol>
+                <li>Fill in your details below</li>
+                <li>Optional: Add phone number for SMS verification</li>
+                <li>Install Google Authenticator app on your phone</li>
+                <li>Scan the QR code that will be displayed</li>
+                <li>Use the 6-digit code to login</li>
+            </ol>
         </div>
-
-        <div id="alertContainer"></div>
-
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab('register')">Register</button>
-            <button class="tab" onclick="switchTab('login')">Login</button>
-            <button class="tab" onclick="switchTab('dashboard')">Dashboard</button>
-            <button class="tab" onclick="switchTab('account')">Account</button>
-        </div>
-
-        <!-- Registration Tab -->
-        <div id="register" class="tab-content active">
-            <div class="instructions">
-                <strong>📝 Registration Steps:</strong>
-                <ol>
-                    <li>Fill in your details below</li>
-                    <li>Optional: Add phone number for SMS verification</li>
-                    <li>Install Google Authenticator app on your phone</li>
-                    <li>Scan the QR code that will be displayed</li>
-                    <li>Use the 6-digit code to login</li>
-                </ol>
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="regUsername">Username *</label>
+                <input type="text" id="regUsername" required placeholder="Enter username">
             </div>
-
-            <form id="registerForm">
-                <div class="form-group">
-                    <label for="regUsername">Username *</label>
-                    <input type="text" id="regUsername" required placeholder="Enter username">
-                </div>
-
-                <div class="form-group">
-                    <label for="regEmail">Email *</label>
-                    <input type="email" id="regEmail" required placeholder="Enter email">
-                </div>
-
-                <div class="form-group">
-                    <label for="regPhone">Phone Number (Optional - for SMS)</label>
-                    <input type="tel" id="regPhone" placeholder="+1234567890">
-                    <div class="help-text">Include country code (e.g., +1 for US)</div>
-                </div>
-
-                <div class="form-group">
-                    <label for="regPassword">Password *</label>
-                    <input type="password" id="regPassword" required placeholder="Enter password">
-                </div>
-
-                <button type="submit">Register Account</button>
-            </form>
-
-            <div id="qrDisplay" style="display: none;"></div>
-        </div>
-
-        <!-- Login Tab -->
-        <div id="login" class="tab-content">
-            <div class="instructions">
-                <strong>🔑 Multi-Channel Login:</strong>
-                <ul>
-                    <li><strong>App:</strong> Use Google Authenticator code</li>
-                    <li><strong>SMS:</strong> Receive code via text message</li>
-                    <li><strong>Email:</strong> Receive code in your inbox</li>
-                </ul>
+            <div class="form-group">
+                <label for="regEmail">Email *</label>
+                <input type="email" id="regEmail" required placeholder="Enter email">
             </div>
+            <div class="form-group">
+                <label for="regPhone">Phone Number (Optional - for SMS)</label>
+                <input type="tel" id="regPhone" placeholder="+1234567890">
+                <div class="help-text">Include country code (e.g., +234 for Nigeria)</div>
+            </div>
+            <div class="form-group">
+                <label for="regPassword">Password *</label>
+                <input type="password" id="regPassword" required placeholder="Enter password (min 8 chars)">
+            </div>
+            <button type="submit">Register Account</button>
+        </form>
+        <div id="qrDisplay" style="display:none;"></div>
+    </div>
 
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="loginUsername">Username</label>
-                    <input type="text" id="loginUsername" required placeholder="Enter username">
-                </div>
-
-                <div class="form-group">
-                    <label>Verification Channels</label>
-                    <div class="checkbox-group">
-                        <label class="checkbox-item">
-                            <input type="checkbox" name="channel" value="app" checked>
-                            <span>📱 Authenticator App (Always Available)</span>
-                        </label>
-                        <label class="checkbox-item" id="smsCheckbox">
-                            <input type="checkbox" name="channel" value="sms">
-                            <span>💬 SMS Verification</span>
-                        </label>
-                        <label class="checkbox-item" id="emailCheckbox">
-                            <input type="checkbox" name="channel" value="email">
-                            <span>📧 Email Verification</span>
-                        </label>
-                    </div>
-                </div>
-
-                <button type="button" onclick="sendVerification()">Send Verification Code</button>
-
-                <div class="form-group" style="margin-top: 20px;">
-                    <label for="loginToken">6-Digit Verification Code</label>
-                    <input type="text" id="loginToken" required placeholder="Enter 6-digit code" maxlength="6" pattern="[0-9]{6}">
-                    <div class="help-text">Code expires in 60 seconds</div>
-                </div>
-
-                <button type="submit">Authenticate</button>
-            </form>
+    <!-- ── Login ── -->
+    <div id="login" class="tab-content">
+        <div class="instructions">
+            <strong>🔑 Multi-Channel Login:</strong>
+            <ul>
+                <li><strong>App:</strong> Use Google Authenticator code</li>
+                <li><strong>SMS:</strong> Receive code via text message</li>
+                <li><strong>Email:</strong> Receive code in your inbox</li>
+            </ul>
         </div>
-
-        <!-- Dashboard Tab -->
-        <div id="dashboard" class="tab-content">
-            <div id="dashboardContent">
-                <div class="alert alert-info">
-                    Please login to view your dashboard.
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="loginUsername">Username</label>
+                <input type="text" id="loginUsername" required placeholder="Enter username">
+            </div>
+            <div class="form-group">
+                <label>Verification Channels</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="channel" value="app" checked>
+                        <span>📱 Authenticator App (Always Available)</span>
+                    </label>
+                    <label class="checkbox-item" id="smsCheckbox">
+                        <input type="checkbox" name="channel" value="sms">
+                        <span>💬 SMS Verification</span>
+                    </label>
+                    <label class="checkbox-item" id="emailCheckbox">
+                        <input type="checkbox" name="channel" value="email">
+                        <span>📧 Email Verification</span>
+                    </label>
                 </div>
             </div>
-        </div>
-
-        <!-- Account Management Tab -->
-        <div id="account" class="tab-content">
-            <div id="accountContent">
-                <div class="alert alert-info">
-                    Please login to access account settings.
-                </div>
+            <button type="button" onclick="sendVerification()">Send Verification Code</button>
+            <div class="form-group" style="margin-top:20px;">
+                <label for="loginToken">6-Digit Verification Code</label>
+                <input type="text" id="loginToken" required placeholder="Enter 6-digit code" maxlength="6" pattern="[0-9]{6}">
+                <div class="help-text">Code expires in 60 seconds</div>
             </div>
-        </div>
+            <button type="submit">Authenticate</button>
+        </form>
+    </div>
 
-        <div class="device-info">
-            <strong>Device ID:</strong> <span id="deviceId"></span>
+    <!-- ── Dashboard ── -->
+    <div id="dashboard" class="tab-content">
+        <div id="dashboardContent">
+            <div class="alert alert-info">Please login to view your dashboard.</div>
         </div>
     </div>
 
-    <script>
-        const API_BASE = '/api/v1';
-        let sessionToken = null;
-        let deviceId = null;
-        let serverStatus = null;
+    <!-- ── Account ── -->
+    <div id="account" class="tab-content">
+        <div id="accountContent">
+            <div class="alert alert-info">Please login to access account settings.</div>
+        </div>
+    </div>
 
-        console.log('TSMCA Client Loaded');
-        console.log('API Base URL:', API_BASE);
+    <div class="device-info">
+        <strong>Device ID:</strong> <span id="deviceId"></span>
+    </div>
+</div>
 
-        function getDeviceId() {
-            let id = localStorage.getItem('deviceId');
-            if (!id) {
-                id = 'device_' + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('deviceId', id);
+<script>
+    const API_BASE = '/api/v1';
+    let sessionToken = null;
+    let deviceId = null;
+    let currentUser = null;   // cached user data from validate
+
+    // ── Init ──────────────────────────────────────────────
+    function getDeviceId() {
+        let id = localStorage.getItem('deviceId');
+        if (!id) {
+            id = 'device_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('deviceId', id);
+        }
+        return id;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        deviceId = getDeviceId();
+        document.getElementById('deviceId').textContent = deviceId;
+        checkServerStatus();
+        sessionToken = localStorage.getItem('sessionToken');
+        if (sessionToken) validateSession();
+    });
+
+    async function checkServerStatus() {
+        try {
+            const res  = await fetch(API_BASE.replace('/api/v1', ''));
+            const data = await res.json();
+            const statusDiv = document.getElementById('channelStatus');
+            statusDiv.innerHTML = `
+                <span class="status-badge ${data.features.sms_verification ? 'status-enabled' : 'status-disabled'}">
+                    SMS: ${data.features.sms_verification ? '✅' : '❌'}
+                </span>
+                <span class="status-badge ${data.features.email_verification ? 'status-enabled' : 'status-disabled'}">
+                    Email: ${data.features.email_verification ? '✅' : '❌'}
+                </span>`;
+            if (!data.features.sms_verification) {
+                const el = document.getElementById('smsCheckbox');
+                el.classList.add('disabled');
+                el.querySelector('input').disabled = true;
             }
-            return id;
+            if (!data.features.email_verification) {
+                const el = document.getElementById('emailCheckbox');
+                el.classList.add('disabled');
+                el.querySelector('input').disabled = true;
+            }
+        } catch (e) { console.error('Server status check failed', e); }
+    }
+
+    // ── Tab switching ─────────────────────────────────────
+    function switchTab(tabName, btn) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(tabName).classList.add('active');
+        // Refresh account data when switching to Account tab
+        if (tabName === 'account' && sessionToken) loadAccountTab();
+    }
+
+    function showAlert(message, type = 'info') {
+        const container = document.getElementById('alertContainer');
+        const el = document.createElement('div');
+        el.className = `alert alert-${type}`;
+        el.textContent = message;
+        container.innerHTML = '';
+        container.appendChild(el);
+        setTimeout(() => el.remove(), 7000);
+    }
+
+    // ── Register ──────────────────────────────────────────
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.disabled = true; btn.textContent = 'Registering...';
+        try {
+            const res = await fetch(`${API_BASE}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username:     document.getElementById('regUsername').value,
+                    email:        document.getElementById('regEmail').value,
+                    password:     document.getElementById('regPassword').value,
+                    phone_number: document.getElementById('regPhone').value || null
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showAlert('✅ Registration successful! Scan the QR code below.', 'success');
+                displayQRCode(data.qr_code_data);
+                e.target.reset();
+            } else {
+                showAlert('❌ ' + (data.detail || 'Registration failed'), 'error');
+            }
+        } catch (err) {
+            showAlert('❌ Connection error: ' + err.message, 'error');
+        } finally {
+            btn.disabled = false; btn.textContent = 'Register Account';
+        }
+    });
+
+    function displayQRCode(uri) {
+        const div = document.getElementById('qrDisplay');
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(uri)}`;
+        div.innerHTML = `
+            <div class="qr-container">
+                <h3>📱 Scan this QR Code</h3>
+                <img src="${qrUrl}" alt="QR Code">
+                <p><strong>Use:</strong> Google Authenticator, Authy, or any TOTP app</p>
+                <div class="secret-display"><strong>Manual Entry:</strong><br>${uri}</div>
+                <div class="alert alert-info" style="margin-top:15px;">
+                    After scanning, go to the <strong>Login</strong> tab to authenticate!
+                </div>
+            </div>`;
+        div.style.display = 'block';
+    }
+
+    // ── Send Verification ─────────────────────────────────
+    async function sendVerification() {
+        const username = document.getElementById('loginUsername').value;
+        if (!username) { showAlert('Please enter your username first', 'warning'); return; }
+        const channels = Array.from(document.querySelectorAll('input[name="channel"]:checked')).map(c => c.value);
+        if (!channels.length) { showAlert('Please select at least one verification channel', 'warning'); return; }
+        try {
+            showAlert('Sending verification codes...', 'info');
+            const res  = await fetch(`${API_BASE}/send-verification`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, device_id: deviceId, channels })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showAlert(`✅ Code sent via: ${data.channels_used.join(', ')}`, 'success');
+                if (data.channels_failed?.length) showAlert(`⚠️ Failed: ${data.channels_failed.join(', ')}`, 'warning');
+            } else {
+                showAlert(data.detail || 'Failed to send code', 'error');
+            }
+        } catch (err) { showAlert('Connection error: ' + err.message, 'error'); }
+    }
+
+    // ── Login ─────────────────────────────────────────────
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('loginUsername').value;
+        const token    = document.getElementById('loginToken').value;
+        if (token.length !== 6 || !/^\d+$/.test(token)) {
+            showAlert('Please enter a valid 6-digit code', 'error'); return;
+        }
+        try {
+            const res  = await fetch(`${API_BASE}/authenticate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, token, device_id: deviceId })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                sessionToken = data.session_token;
+                localStorage.setItem('sessionToken', sessionToken);
+                showAlert('✅ Authentication successful!', 'success');
+                e.target.reset();
+                setTimeout(() => {
+                    const dashTab = document.querySelectorAll('.tab')[2];
+                    dashTab.click();
+                    loadDashboard();
+                }, 1000);
+            } else {
+                showAlert(data.detail || 'Authentication failed', 'error');
+            }
+        } catch (err) { showAlert('Connection error: ' + err.message, 'error'); }
+    });
+
+    // ── Session validation ────────────────────────────────
+    async function validateSession() {
+        if (!sessionToken) return;
+        try {
+            const res = await fetch(`${API_BASE}/validate`, {
+                headers: { 'Authorization': `Bearer ${sessionToken}` }
+            });
+            if (res.ok) {
+                currentUser = await res.json();
+                loadDashboard(currentUser);
+            } else {
+                localStorage.removeItem('sessionToken');
+                sessionToken = null;
+            }
+        } catch (err) { console.error('Session validation error:', err); }
+    }
+
+    // ── Dashboard ─────────────────────────────────────────
+    async function loadDashboard(userData = null) {
+        const dashContent = document.getElementById('dashboardContent');
+        if (!sessionToken) {
+            dashContent.innerHTML = `<div class="alert alert-info">Please login to view your dashboard.</div>`;
+            return;
+        }
+        dashContent.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
+        try {
+            if (!userData) {
+                const res = await fetch(`${API_BASE}/validate`, {
+                    headers: { 'Authorization': `Bearer ${sessionToken}` }
+                });
+                userData = await res.json();
+            }
+            currentUser = userData;
+            const expiresDate = new Date(userData.expires_at);
+            const timeLeft    = Math.floor((expiresDate - new Date()) / 60000);
+
+            dashContent.innerHTML = `
+                <div class="session-info">
+                    <h3>✅ Authenticated Session</h3>
+                    <div class="info-row"><span class="info-label">Username:</span><span class="info-value">${userData.username}</span></div>
+                    <div class="info-row"><span class="info-label">Email:</span><span class="info-value">${userData.email}</span></div>
+                    <div class="info-row"><span class="info-label">Phone:</span><span class="info-value">${userData.phone_number || 'Not provided'}</span></div>
+                    <div class="info-row"><span class="info-label">User ID:</span><span class="info-value">${userData.user_id}</span></div>
+                    <div class="info-row"><span class="info-label">Session Expires:</span><span class="info-value">${timeLeft} minutes</span></div>
+                    <div class="info-row"><span class="info-label">Device ID:</span><span class="info-value">${deviceId}</span></div>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>`;
+        } catch (err) {
+            dashContent.innerHTML = `<div class="alert alert-error">Failed to load dashboard: ${err.message}</div>`;
+        }
+    }
+
+    // ════════════════════════════════════════════════════════
+    // ACCOUNT TAB — main renderer
+    // ════════════════════════════════════════════════════════
+    async function loadAccountTab() {
+        const el = document.getElementById('accountContent');
+        if (!sessionToken || !currentUser) {
+            el.innerHTML = `<div class="alert alert-info">Please login to access account settings.</div>`;
+            return;
         }
 
-        async function checkServerStatus() {
-            try {
-                const response = await fetch(API_BASE.replace('/api/v1', ''));
-                const data = await response.json();
-                serverStatus = data.features;
-                
-                const statusDiv = document.getElementById('channelStatus');
-                statusDiv.innerHTML = `
-                    <span class="status-badge ${data.features.sms_verification ? 'status-enabled' : 'status-disabled'}">
-                        SMS: ${data.features.sms_verification ? '✅' : '❌'}
+        el.innerHTML = `
+        <h2 style="color:#667eea; font-size:20px; margin-bottom:4px;">⚙️ Account Settings</h2>
+        <p style="color:#888; font-size:13px; margin:0 0 18px;">Manage your profile, password, devices, and sessions.</p>
+
+        <div class="account-grid">
+
+            <!-- Security Status -->
+            <div class="account-card span-full">
+                <h3>🔒 Security Status</h3>
+                <div class="sec-row">
+                    <span class="sec-label">Two-Factor Authentication</span>
+                    <span style="color:#28a745; font-weight:600;">✅ Enabled</span>
+                </div>
+                <div class="sec-row">
+                    <span class="sec-label">Email Verification</span>
+                    <span style="color:#28a745; font-weight:600;">✅ Verified</span>
+                </div>
+                <div class="sec-row">
+                    <span class="sec-label">SMS Verification</span>
+                    <span style="color:${currentUser.phone_number ? '#28a745' : '#e65100'}; font-weight:600;">
+                        ${currentUser.phone_number ? '✅ Enabled' : '⚠️ Not Set Up'}
                     </span>
-                    <span class="status-badge ${data.features.email_verification ? 'status-enabled' : 'status-disabled'}">
-                        Email: ${data.features.email_verification ? '✅' : '❌'}
-                    </span>
-                `;
-                
-                if (!data.features.sms_verification) {
-                    const smsCheckbox = document.getElementById('smsCheckbox');
-                    smsCheckbox.classList.add('disabled');
-                    smsCheckbox.querySelector('input').disabled = true;
-                }
-                
-                if (!data.features.email_verification) {
-                    const emailCheckbox = document.getElementById('emailCheckbox');
-                    emailCheckbox.classList.add('disabled');
-                    emailCheckbox.querySelector('input').disabled = true;
-                }
-            } catch (error) {
-                console.error('Failed to check server status:', error);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            deviceId = getDeviceId();
-            document.getElementById('deviceId').textContent = deviceId;
-            checkServerStatus();
-            
-            sessionToken = localStorage.getItem('sessionToken');
-            if (sessionToken) {
-                validateSession();
-            }
-        });
-
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
-            event.target.classList.add('active');
-            document.getElementById(tabName).classList.add('active');
-        }
-
-        function showAlert(message, type = 'info') {
-            const alertContainer = document.getElementById('alertContainer');
-            const alert = document.createElement('div');
-            alert.className = `alert alert-${type}`;
-            alert.textContent = message;
-            alertContainer.innerHTML = '';
-            alertContainer.appendChild(alert);
-            
-            setTimeout(() => alert.remove(), 7000);
-        }
-
-        // Register form
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const username = document.getElementById('regUsername').value;
-            const email = document.getElementById('regEmail').value;
-            const password = document.getElementById('regPassword').value;
-            const phone = document.getElementById('regPhone').value;
-            
-            const submitBtn = e.target.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Registering...';
-            
-            try {
-                console.log('Attempting registration...', { username, email, phone });
-                
-                const response = await fetch(`${API_BASE}/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        username, 
-                        email, 
-                        password,
-                        phone_number: phone || null
-                    })
-                });
-                
-                console.log('Response status:', response.status);
-                
-                const data = await response.json();
-                console.log('Response data:', data);
-                
-                if (response.ok) {
-                    showAlert('✅ Registration successful! Scan the QR code below.', 'success');
-                    displayQRCode(data.qr_code_data);
-                    e.target.reset();
-                } else {
-                    showAlert('❌ ' + (data.detail || 'Registration failed'), 'error');
-                }
-            } catch (error) {
-                console.error('Registration error:', error);
-                showAlert('❌ Connection error: ' + error.message + '. Check console for details.', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
-            }
-        });
-
-        function displayQRCode(uri) {
-            const qrDisplay = document.getElementById('qrDisplay');
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(uri)}`;
-            
-            qrDisplay.innerHTML = `
-                <div class="qr-container">
-                    <h3>📱 Scan this QR Code</h3>
-                    <img src="${qrUrl}" alt="QR Code">
-                    <p><strong>Use:</strong> Google Authenticator, Authy, or any TOTP app</p>
-                    <div class="secret-display">
-                        <strong>Manual Entry:</strong><br>
-                        ${uri}
-                    </div>
-                    <div class="alert alert-info" style="margin-top: 15px;">
-                        After scanning, go to the <strong>Login</strong> tab to authenticate!
-                    </div>
                 </div>
-            `;
-            qrDisplay.style.display = 'block';
-        }
+            </div>
 
-        async function sendVerification() {
-            const username = document.getElementById('loginUsername').value;
-            if (!username) {
-                showAlert('Please enter your username first', 'warning');
-                return;
-            }
-            
-            const selectedChannels = Array.from(document.querySelectorAll('input[name="channel"]:checked'))
-                .map(cb => cb.value);
-            
-            if (selectedChannels.length === 0) {
-                showAlert('Please select at least one verification channel', 'warning');
-                return;
-            }
-            
-            try {
-                showAlert('Sending verification codes...', 'info');
-                
-                const response = await fetch(`${API_BASE}/send-verification`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username,
-                        device_id: deviceId,
-                        channels: selectedChannels
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    showAlert(`✅ Code sent via: ${data.channels_used.join(', ')}`, 'success');
-                    if (data.channels_failed && data.channels_failed.length > 0) {
-                        showAlert(`⚠️ Failed: ${data.channels_failed.join(', ')}`, 'warning');
-                    }
-                } else {
-                    showAlert(data.detail || 'Failed to send verification code', 'error');
-                }
-            } catch (error) {
-                showAlert('Connection error: ' + error.message, 'error');
-            }
-        }
-
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const username = document.getElementById('loginUsername').value;
-            const token = document.getElementById('loginToken').value;
-            
-            if (token.length !== 6 || !/^\d+$/.test(token)) {
-                showAlert('Please enter a valid 6-digit code', 'error');
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${API_BASE}/authenticate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username,
-                        token,
-                        device_id: deviceId
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    sessionToken = data.session_token;
-                    localStorage.setItem('sessionToken', sessionToken);
-                    showAlert('✅ Authentication successful!', 'success');
-                    
-                    document.getElementById('loginForm').reset();
-                    
-                    setTimeout(() => {
-                        document.querySelectorAll('.tab')[2].click();
-                        loadDashboard();
-                    }, 1000);
-                } else {
-                    showAlert(data.detail || 'Authentication failed', 'error');
-                }
-            } catch (error) {
-                showAlert('Connection error: ' + error.message, 'error');
-            }
-        });
-
-        async function validateSession() {
-            if (!sessionToken) return;
-            
-            try {
-                const response = await fetch(`${API_BASE}/validate`, {
-                    headers: {
-                        'Authorization': `Bearer ${sessionToken}`
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    loadDashboard(data);
-                } else {
-                    localStorage.removeItem('sessionToken');
-                    sessionToken = null;
-                }
-            } catch (error) {
-                console.error('Session validation error:', error);
-            }
-        }
-
-        async function loadDashboard(userData = null) {
-            const dashboardContent = document.getElementById('dashboardContent');
-            const accountContent = document.getElementById('accountContent');
-            
-            if (!sessionToken) {
-                dashboardContent.innerHTML = `
-                    <div class="alert alert-info">
-                        Please login to view your dashboard.
-                    </div>
-                `;
-                accountContent.innerHTML = `
-                    <div class="alert alert-info">
-                        Please login to access account settings.
-                    </div>
-                `;
-                return;
-            }
-            
-            dashboardContent.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
-            
-            try {
-                if (!userData) {
-                    const response = await fetch(`${API_BASE}/validate`, {
-                        headers: { 'Authorization': `Bearer ${sessionToken}` }
-                    });
-                    userData = await response.json();
-                }
-                
-                const expiresDate = new Date(userData.expires_at);
-                const now = new Date();
-                const timeLeft = Math.floor((expiresDate - now) / 60000);
-                
-                dashboardContent.innerHTML = `
-                    <div class="session-info">
-                        <h3>✅ Authenticated Session</h3>
-                        <div class="info-row">
-                            <span class="info-label">Username:</span>
-                            <span class="info-value">${userData.username}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Email:</span>
-                            <span class="info-value">${userData.email}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Phone:</span>
-                            <span class="info-value">${userData.phone_number || 'Not provided'}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">User ID:</span>
-                            <span class="info-value">${userData.user_id}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Session Expires:</span>
-                            <span class="info-value">${timeLeft} minutes</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Device ID:</span>
-                            <span class="info-value">${deviceId}</span>
-                        </div>
-                        <button class="logout-btn" onclick="logout()">Logout</button>
-                    </div>
-                `;
-
-                accountContent.innerHTML = `
-                    <div style="max-width: 800px; margin: 0 auto;">
-                        <h2 style="color: #667eea; margin-bottom: 20px;">⚙️ Account Settings</h2>
-                        
-                        <div class="session-info" style="margin-bottom: 20px;">
-                            <h3>🔒 Security Status</h3>
-                            <div class="info-row">
-                                <span class="info-label">Two-Factor Authentication:</span>
-                                <span class="info-value" style="color: #28a745;">✅ Enabled</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Email Verification:</span>
-                                <span class="info-value" style="color: #28a745;">✅ Verified</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">SMS Verification:</span>
-                                <span class="info-value">${userData.phone_number ? '✅ Enabled' : '⚠️ Not Set Up'}</span>
-                            </div>
-                        </div>
-
-                        <div class="session-info" style="margin-bottom: 20px;">
-                            <h3>📊 Recent Activity</h3>
-                            <div id="loginHistory">
-                                <div class="loading"><div class="spinner"></div>Loading activity...</div>
-                            </div>
-                        </div>
-
-                        <div class="session-info" style="margin-bottom: 20px;">
-                            <h3>📱 Trusted Devices</h3>
-                            <div id="trustedDevices">
-                                <div class="loading"><div class="spinner"></div>Loading devices...</div>
-                            </div>
-                        </div>
-
-                        <div class="session-info">
-                            <h3>🛠️ Account Management</h3>
-                            <p style="color: #6c757d; margin-bottom: 15px;">Manage your account settings and security preferences</p>
-                            <button class="logout-btn" onclick="logout()">Logout from All Devices</button>
-                        </div>
-                    </div>
-                `;
-
-                loadLoginHistory(userData.username);
-                loadTrustedDevices(userData.username);
-                
-            } catch (error) {
-                dashboardContent.innerHTML = `
-                    <div class="alert alert-error">
-                        Failed to load dashboard: ${error.message}
-                    </div>
-                `;
-            }
-        }
-
-        async function loadLoginHistory(username) {
-            try {
-                const response = await fetch(`${API_BASE}/users/${username}/activity`, {
-                    headers: { 'Authorization': `Bearer ${sessionToken}` }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    const historyDiv = document.getElementById('loginHistory');
-                    
-                    if (data.activity && data.activity.length > 0) {
-                        historyDiv.innerHTML = data.activity.slice(0, 5).map(log => `
-                            <div style="padding: 10px; border-bottom: 1px solid #cce5ff; display: flex; justify-content: space-between;">
-                                <div>
-                                    <strong>${log.status === 'SUCCESS' ? '✅' : '❌'} ${log.auth_method}</strong>
-                                    <div style="font-size: 12px; color: #6c757d;">${log.ip_address} • ${log.timestamp}</div>
-                                </div>
-                                <div style="color: ${log.status === 'SUCCESS' ? '#28a745' : '#dc3545'};">
-                                    ${log.status}
-                                </div>
-                            </div>
-                        `).join('');
-                    } else {
-                        historyDiv.innerHTML = '<p style="color: #6c757d;">No recent activity</p>';
-                    }
-                } else {
-                    document.getElementById('loginHistory').innerHTML = '<p style="color: #6c757d;">Activity log unavailable</p>';
-                }
-            } catch (error) {
-                document.getElementById('loginHistory').innerHTML = '<p style="color: #dc3545;">Failed to load activity</p>';
-            }
-        }
-
-        async function loadTrustedDevices(username) {
-            try {
-                const response = await fetch(`${API_BASE}/users/${username}/devices`, {
-                    headers: { 'Authorization': `Bearer ${sessionToken}` }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    const devicesDiv = document.getElementById('trustedDevices');
-                    
-                    if (data.devices && data.devices.length > 0) {
-                        devicesDiv.innerHTML = data.devices.map((device, index) => `
-                            <div style="padding: 10px; border-bottom: 1px solid #cce5ff; display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <strong>🖥️ Device ${index + 1}</strong>
-                                    <div style="font-size: 12px; color: #6c757d;">
-                                        Added: ${device.first_seen}<br>
-                                        Last used: ${device.last_used || 'Never'}
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('');
-                    } else {
-                        devicesDiv.innerHTML = '<p style="color: #6c757d;">No trusted devices</p>';
-                    }
-                } else {
-                    document.getElementById('trustedDevices').innerHTML = '<p style="color: #6c757d;">Devices list unavailable</p>';
-                }
-            } catch (error) {
-                document.getElementById('trustedDevices').innerHTML = '<p style="color: #dc3545;">Failed to load devices</p>';
-            }
-        }
-
-        async function logout() {
-            if (!sessionToken) return;
-            
-            try {
-                await fetch(`${API_BASE}/logout`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${sessionToken}` }
-                });
-            } catch (error) {
-                console.error('Logout error:', error);
-            }
-            
-            localStorage.removeItem('sessionToken');
-            sessionToken = null;
-            
-            showAlert('Logged out successfully', 'success');
-            document.getElementById('dashboardContent').innerHTML = `
-                <div class="alert alert-info">
-                    Please login to view your dashboard.
+            <!-- FEATURE 3a: Edit Profile -->
+            <div class="account-card">
+                <h3>👤 Edit Profile</h3>
+                <div class="acc-group">
+                    <label>Email</label>
+                    <input type="email" id="edit-email" placeholder="${currentUser.email}" value="${currentUser.email}">
                 </div>
-            `;
-            document.getElementById('accountContent').innerHTML = `
-                <div class="alert alert-info">
-                    Please login to access account settings.
+                <div class="acc-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="edit-phone" placeholder="e.g. +2348012345678" value="${currentUser.phone_number || ''}">
                 </div>
-            `;
-            
-            document.querySelectorAll('.tab')[1].click();
+                <button class="btn-acc" onclick="saveProfile()">Save Changes</button>
+                <div class="acc-feedback" id="profile-fb"></div>
+            </div>
+
+            <!-- FEATURE 3b: Change Password -->
+            <div class="account-card">
+                <h3>🔑 Change Password</h3>
+                <div class="acc-group">
+                    <label>Current Password</label>
+                    <input type="password" id="pw-current" placeholder="Enter current password">
+                </div>
+                <div class="acc-group">
+                    <label>New Password</label>
+                    <input type="password" id="pw-new" placeholder="At least 8 characters">
+                </div>
+                <div class="acc-group">
+                    <label>Confirm New Password</label>
+                    <input type="password" id="pw-confirm" placeholder="Repeat new password">
+                </div>
+                <button class="btn-acc" onclick="changePassword()">Update Password</button>
+                <div class="acc-feedback" id="password-fb"></div>
+            </div>
+
+            <!-- FEATURE 2: Device Management -->
+            <div class="account-card">
+                <h3>📱 Trusted Devices</h3>
+                <div class="item-list" id="devices-list">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+                <div class="acc-feedback" id="devices-fb"></div>
+            </div>
+
+            <!-- FEATURE 4: Session Management -->
+            <div class="account-card">
+                <h3>🕐 Active Sessions</h3>
+                <div class="item-list" id="sessions-list">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+                <button class="btn-danger-full" onclick="killAllOtherSessions()">⚠️ Log Out All Other Sessions</button>
+                <div class="acc-feedback" id="sessions-fb"></div>
+            </div>
+
+        </div>`;
+
+        // Load device and session lists in parallel
+        loadDevices();
+        loadSessions();
+    }
+
+    // ── FEATURE 3a: Save Profile ──────────────────────────
+    async function saveProfile() {
+        const email = document.getElementById('edit-email').value.trim();
+        const phone = document.getElementById('edit-phone').value.trim();
+        const fb    = document.getElementById('profile-fb');
+
+        if (!email) { showFeedback(fb, 'Email cannot be empty', false); return; }
+
+        const btn = document.querySelector('#accountContent .account-card:nth-child(2) .btn-acc');
+        btn.disabled = true; btn.textContent = 'Saving...';
+
+        try {
+            const res  = await fetch(`${API_BASE}/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionToken}`
+                },
+                body: JSON.stringify({ email, phone_number: phone || null })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showFeedback(fb, '✅ Profile updated successfully!', true);
+                currentUser.email        = data.user.email;
+                currentUser.phone_number = data.user.phone_number;
+                // Refresh dashboard and account to show new values
+                loadDashboard(currentUser);
+            } else {
+                showFeedback(fb, '❌ ' + (data.detail || 'Update failed'), false);
+            }
+        } catch (err) {
+            showFeedback(fb, '❌ Connection error', false);
+        } finally {
+            btn.disabled = false; btn.textContent = 'Save Changes';
         }
-    </script>
+    }
+
+    // ── FEATURE 3b: Change Password ───────────────────────
+    async function changePassword() {
+        const current = document.getElementById('pw-current').value;
+        const newPw   = document.getElementById('pw-new').value;
+        const confirm = document.getElementById('pw-confirm').value;
+        const fb      = document.getElementById('password-fb');
+
+        if (newPw.length < 8) { showFeedback(fb, '❌ Password must be at least 8 characters', false); return; }
+        if (newPw !== confirm) { showFeedback(fb, '❌ Passwords do not match', false); return; }
+
+        const btn = document.querySelector('#accountContent .account-card:nth-child(3) .btn-acc');
+        btn.disabled = true; btn.textContent = 'Updating...';
+
+        try {
+            const res  = await fetch(`${API_BASE}/change-password`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionToken}`
+                },
+                body: JSON.stringify({ current_password: current || null, new_password: newPw })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showFeedback(fb, '✅ ' + data.message, true);
+                document.getElementById('pw-current').value = '';
+                document.getElementById('pw-new').value     = '';
+                document.getElementById('pw-confirm').value = '';
+                // Refresh session list — other sessions were killed
+                setTimeout(loadSessions, 800);
+            } else {
+                showFeedback(fb, '❌ ' + (data.detail || 'Password change failed'), false);
+            }
+        } catch (err) {
+            showFeedback(fb, '❌ Connection error', false);
+        } finally {
+            btn.disabled = false; btn.textContent = 'Update Password';
+        }
+    }
+
+    // ── FEATURE 2: Load Devices ───────────────────────────
+    async function loadDevices() {
+        const list = document.getElementById('devices-list');
+        const fb   = document.getElementById('devices-fb');
+        if (!list) return;
+        try {
+            const res  = await fetch(`${API_BASE}/devices`, {
+                headers: { 'Authorization': `Bearer ${sessionToken}` }
+            });
+            const data = await res.json();
+            if (!res.ok) { list.innerHTML = `<p style="color:#dc3545;font-size:13px;">Failed to load devices</p>`; return; }
+
+            if (!data.devices.length) {
+                list.innerHTML = `<p style="color:#aaa;font-size:13px;text-align:center;padding:16px 0;">No trusted devices found</p>`;
+                return;
+            }
+
+            list.innerHTML = data.devices.map(d => `
+                <div class="item-row ${d.is_current ? 'is-current' : ''}" id="device-row-${d.device_id}">
+                    <div class="item-info">
+                        <div class="item-name">
+                            📱 ${escHtml(d.device_name)}
+                            ${d.is_current ? '<span class="current-badge">THIS DEVICE</span>' : ''}
+                        </div>
+                        <div class="item-meta">Last used: ${formatDate(d.last_used)} · Added: ${formatDate(d.first_seen)}</div>
+                    </div>
+                    ${d.is_current
+                        ? `<button class="btn-revoke" disabled title="Current device">Active</button>`
+                        : `<button class="btn-revoke" onclick="revokeDevice('${d.device_id}', this)">Revoke</button>`
+                    }
+                </div>`).join('');
+        } catch (err) {
+            if (list) list.innerHTML = `<p style="color:#dc3545;font-size:13px;">Error loading devices</p>`;
+        }
+    }
+
+    async function revokeDevice(deviceId, btn) {
+        if (!confirm('Revoke this device? It will be logged out immediately.')) return;
+        btn.disabled = true; btn.textContent = '...';
+        try {
+            const res  = await fetch(`${API_BASE}/devices/${deviceId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${sessionToken}` }
+            });
+            const data = await res.json();
+            const fb   = document.getElementById('devices-fb');
+            if (res.ok) {
+                document.getElementById(`device-row-${deviceId}`)?.remove();
+                showFeedback(fb, '✅ Device revoked', true);
+                loadSessions(); // sessions may have changed too
+            } else {
+                showFeedback(fb, '❌ ' + (data.detail || 'Failed'), false);
+                btn.disabled = false; btn.textContent = 'Revoke';
+            }
+        } catch (err) {
+            btn.disabled = false; btn.textContent = 'Revoke';
+        }
+    }
+
+    // ── FEATURE 4: Load Sessions ──────────────────────────
+    async function loadSessions() {
+        const list = document.getElementById('sessions-list');
+        if (!list) return;
+        try {
+            const res  = await fetch(`${API_BASE}/sessions`, {
+                headers: { 'Authorization': `Bearer ${sessionToken}` }
+            });
+            const data = await res.json();
+            if (!res.ok) { list.innerHTML = `<p style="color:#dc3545;font-size:13px;">Failed to load sessions</p>`; return; }
+
+            if (!data.sessions.length) {
+                list.innerHTML = `<p style="color:#aaa;font-size:13px;text-align:center;padding:16px 0;">No active sessions</p>`;
+                return;
+            }
+
+            list.innerHTML = data.sessions.map(s => `
+                <div class="item-row ${s.is_current ? 'is-current' : ''}" id="session-row-${s.session_token}">
+                    <div class="item-info">
+                        <div class="item-name">
+                            🖥️ ${escHtml(s.device_name)}
+                            ${s.is_current ? '<span class="current-badge">CURRENT</span>' : ''}
+                        </div>
+                        <div class="item-meta">IP: ${escHtml(s.ip_address)} · Started: ${formatDate(s.created_at)}</div>
+                    </div>
+                    ${s.is_current
+                        ? `<button class="btn-revoke" disabled>Active</button>`
+                        : `<button class="btn-revoke" onclick="terminateSession('${s.session_token}', this)">End</button>`
+                    }
+                </div>`).join('');
+        } catch (err) {
+            if (list) list.innerHTML = `<p style="color:#dc3545;font-size:13px;">Error loading sessions</p>`;
+        }
+    }
+
+    async function terminateSession(token, btn) {
+        if (!confirm('End this session?')) return;
+        btn.disabled = true; btn.textContent = '...';
+        try {
+            const encodedToken = encodeURIComponent(token);
+            const res  = await fetch(`${API_BASE}/sessions/${encodedToken}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${sessionToken}` }
+            });
+            const data = await res.json();
+            const fb   = document.getElementById('sessions-fb');
+            if (res.ok) {
+                document.getElementById(`session-row-${token}`)?.remove();
+                showFeedback(fb, '✅ Session terminated', true);
+            } else {
+                showFeedback(fb, '❌ ' + (data.detail || 'Failed'), false);
+                btn.disabled = false; btn.textContent = 'End';
+            }
+        } catch (err) {
+            btn.disabled = false; btn.textContent = 'End';
+        }
+    }
+
+    async function killAllOtherSessions() {
+        if (!confirm('Log out all other sessions? You will stay logged in on this device only.')) return;
+        const fb  = document.getElementById('sessions-fb');
+        const btn = document.querySelector('.btn-danger-full');
+        btn.disabled = true; btn.textContent = 'Logging out...';
+        try {
+            const res  = await fetch(`${API_BASE}/sessions/all-others`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${sessionToken}` }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showFeedback(fb, '✅ ' + data.message, true);
+                loadSessions();
+                loadDevices();
+            } else {
+                showFeedback(fb, '❌ ' + (data.detail || 'Failed'), false);
+            }
+        } catch (err) {
+            showFeedback(fb, '❌ Connection error', false);
+        } finally {
+            btn.disabled = false; btn.textContent = '⚠️ Log Out All Other Sessions';
+        }
+    }
+
+    // ── Logout ────────────────────────────────────────────
+    async function logout() {
+        if (!sessionToken) return;
+        try {
+            await fetch(`${API_BASE}/logout`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${sessionToken}` }
+            });
+        } catch (e) { console.error('Logout error:', e); }
+
+        localStorage.removeItem('sessionToken');
+        sessionToken = null;
+        currentUser  = null;
+
+        showAlert('Logged out successfully', 'success');
+        document.getElementById('dashboardContent').innerHTML = `<div class="alert alert-info">Please login to view your dashboard.</div>`;
+        document.getElementById('accountContent').innerHTML   = `<div class="alert alert-info">Please login to access account settings.</div>`;
+        document.querySelectorAll('.tab')[1].click();
+    }
+
+    // ── Utilities ─────────────────────────────────────────
+    function showFeedback(el, msg, success) {
+        el.textContent = msg;
+        el.className   = 'acc-feedback ' + (success ? 'ok' : 'err');
+        setTimeout(() => { el.className = 'acc-feedback'; }, 5000);
+    }
+
+    function formatDate(iso) {
+        if (!iso) return 'Never';
+        try {
+            return new Date(iso).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+        } catch { return iso; }
+    }
+
+    function escHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+</script>
 </body>
 </html>
