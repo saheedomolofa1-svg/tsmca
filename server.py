@@ -812,7 +812,19 @@ async def admin_users():
     users = c.fetchall()
     conn.close()
     return {"users": [dict(row) for row in users]}
+# ── Add this endpoint to server.py alongside the other admin endpoints ──
 
+@app.get("/api/v1/admin/all-devices")
+async def admin_all_devices():
+    """Return all trusted devices across all users (used for device count in admin table)."""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""SELECT device_id, user_id, device_name, device_type, trust_level, first_seen, last_used
+                 FROM trusted_devices
+                 ORDER BY last_used DESC""")
+    devices = c.fetchall()
+    conn.close()
+    return {"devices": [dict(d) for d in devices]}
 
 if __name__ == "__main__":
     import uvicorn
