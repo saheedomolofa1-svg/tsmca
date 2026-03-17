@@ -6,607 +6,402 @@
     <title>TSMCA Admin Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; min-height: 100vh; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f7fa;
-            min-height: 100vh;
-        }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header h1 { font-size: 28px; margin-bottom: 5px; }
+        .header p { opacity: 0.9; font-size: 14px; }
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px 40px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px; }
 
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 5px;
-        }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .stat-icon  { font-size: 36px; margin-bottom: 10px; }
+        .stat-value { font-size: 32px; font-weight: bold; color: #667eea; margin-bottom: 5px; }
+        .stat-label { color: #6c757d; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-change { font-size: 12px; margin-top: 8px; padding: 4px 8px; border-radius: 4px; display: inline-block; }
+        .stat-change.positive { background: #d4edda; color: #155724; }
+        .stat-change.negative { background: #f8d7da; color: #721c24; }
 
-        .header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .chart-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .chart-card h3 { color: #333; margin-bottom: 20px; font-size: 18px; }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 30px 20px;
-        }
+        .table-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; overflow-x: auto; }
+        .table-card h3 { color: #333; margin-bottom: 16px; font-size: 18px; }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8f9fa; padding: 12px; text-align: left; font-weight: 600; color: #495057; font-size: 14px; border-bottom: 2px solid #dee2e6; white-space: nowrap; }
+        td { padding: 12px; border-bottom: 1px solid #dee2e6; font-size: 14px; }
+        tr:hover { background: #f8f9fa; }
 
-        .stat-card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            transition: transform 0.3s;
-        }
+        .badge { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+        .badge-success  { background: #d4edda; color: #155724; }
+        .badge-failure  { background: #f8d7da; color: #721c24; }
+        .badge-active   { background: #d1ecf1; color: #0c5460; }
+        .badge-locked   { background: #fff3cd; color: #856404; }
+        .badge-sent     { background: #e2e3e5; color: #495057; }
+        .badge-session  { background: #e7f3ff; color: #0056b3; }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
+        .refresh-btn { background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; transition: background 0.3s; width: auto; }
+        .refresh-btn:hover { background: #5568d3; transform: none; box-shadow: none; }
 
-        .stat-icon {
-            font-size: 36px;
-            margin-bottom: 10px;
-        }
+        .loading { text-align: center; padding: 40px; color: #667eea; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
 
-        .stat-value {
-            font-size: 32px;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 5px;
-        }
+        .alert { padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .alert-info  { background: #d1ecf1; color: #0c5460; border-left: 4px solid #17a2b8; }
+        .alert-error { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
 
-        .stat-label {
-            color: #6c757d;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+        .no-data { text-align: center; padding: 30px; color: #adb5bd; font-size: 14px; }
 
-        .stat-change {
-            font-size: 12px;
-            margin-top: 8px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            display: inline-block;
-        }
+        .user-avatar { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg,#667eea,#764ba2); color: white; font-weight: 700; font-size: 13px; margin-right: 8px; flex-shrink: 0; }
+        .user-cell { display: flex; align-items: center; }
 
-        .stat-change.positive {
-            background: #d4edda;
-            color: #155724;
-        }
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+        .filter-bar input, .filter-bar select { padding: 8px 12px; border: 1.5px solid #dee2e6; border-radius: 8px; font-size: 13px; color: #333; background: #fafafa; outline: none; }
+        .filter-bar input:focus, .filter-bar select:focus { border-color: #667eea; }
 
-        .stat-change.negative {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .chart-card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .chart-card h3 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 18px;
-        }
-
-        .table-card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            margin-bottom: 20px;
-        }
-
-        .table-card h3 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 18px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            background: #f8f9fa;
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-            color: #495057;
-            font-size: 14px;
-            border-bottom: 2px solid #dee2e6;
-        }
-
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #dee2e6;
-            font-size: 14px;
-        }
-
-        tr:hover {
-            background: #f8f9fa;
-        }
-
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .status-success {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-failure {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .status-active {
-            background: #d1ecf1;
-            color: #0c5460;
-        }
-
-        .refresh-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: background 0.3s;
-        }
-
-        .refresh-btn:hover {
-            background: #5568d3;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #667eea;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .alert {
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .alert-info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border-left: 4px solid #17a2b8;
-        }
-
-        .alert-warning {
-            background: #fff3cd;
-            color: #856404;
-            border-left: 4px solid #ffc107;
-        }
+        .count-badge { font-size: 12px; background: #667eea; color: white; padding: 2px 8px; border-radius: 10px; margin-left: 8px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🛡️ TSMCA Admin Dashboard</h1>
-        <p>Real-time System Monitoring & Analytics</p>
+
+<div class="header">
+    <h1>🛡️ TSMCA Admin Dashboard</h1>
+    <p>Real-time System Monitoring &amp; Analytics</p>
+</div>
+
+<div class="container">
+    <div class="alert alert-info">
+        <span><strong>📊 Live Dashboard:</strong> Data updates every 30 seconds. Last refresh: <span id="lastUpdate">Loading...</span></span>
+        <button class="refresh-btn" onclick="loadDashboard()">🔄 Refresh Now</button>
     </div>
 
-    <div class="container">
-        <div class="alert alert-info">
-            <strong>📊 Live Dashboard:</strong> Data updates every 30 seconds. Last refresh: <span id="lastUpdate">Loading...</span>
-            <button class="refresh-btn" onclick="loadDashboard()" style="float: right; margin-top: -5px;">🔄 Refresh Now</button>
-        </div>
-
-        <!-- Stats Cards -->
-        <div class="stats-grid" id="statsGrid">
-            <div class="loading"><div class="spinner"></div>Loading statistics...</div>
-        </div>
-
-        <!-- Charts -->
-        <div class="charts-grid">
-            <div class="chart-card">
-                <h3>📈 Authentication Trend (Last 7 Days)</h3>
-                <canvas id="authTrendChart"></canvas>
-            </div>
-            <div class="chart-card">
-                <h3>🎯 Success vs Failure Rate</h3>
-                <canvas id="successRateChart"></canvas>
-            </div>
-        </div>
-
-        <div class="charts-grid">
-            <div class="chart-card">
-                <h3>📱 Authentication Methods</h3>
-                <canvas id="methodsChart"></canvas>
-            </div>
-            <div class="chart-card">
-                <h3>⏰ Peak Usage Hours</h3>
-                <canvas id="peakHoursChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Recent Activity Table -->
-        <div class="table-card">
-            <h3>🕐 Recent Authentication Activity</h3>
-            <div id="recentActivity">
-                <div class="loading"><div class="spinner"></div>Loading activity...</div>
-            </div>
-        </div>
-
-        <!-- Users Table -->
-        <div class="table-card">
-            <h3>👥 Registered Users</h3>
-            <div id="usersTable">
-                <div class="loading"><div class="spinner"></div>Loading users...</div>
-            </div>
-        </div>
+    <div class="stats-grid" id="statsGrid">
+        <div class="loading"><div class="spinner"></div></div>
     </div>
 
-    <script>
-        const API_BASE = '/api/v1';
-        let charts = {};
+    <div class="charts-grid">
+        <div class="chart-card"><h3>📈 Authentication Trend (Last 7 Days)</h3><canvas id="authTrendChart"></canvas></div>
+        <div class="chart-card"><h3>🎯 Success vs Failure Rate</h3><canvas id="successRateChart"></canvas></div>
+    </div>
 
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', () => {
-            loadDashboard();
-            // Auto-refresh every 30 seconds
-            setInterval(loadDashboard, 30000);
-        });
+    <div class="charts-grid">
+        <div class="chart-card"><h3>📱 Authentication Methods Used</h3><canvas id="methodsChart"></canvas></div>
+        <div class="chart-card"><h3>⏰ Peak Usage Hours (Last 24h)</h3><canvas id="peakHoursChart"></canvas></div>
+    </div>
 
-        async function loadDashboard() {
-            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
-            await Promise.all([
-                loadStats(),
-                loadCharts(),
-                loadRecentActivity(),
-                loadUsers()
-            ]);
-        }
+    <!-- Recent Activity -->
+    <div class="table-card">
+        <h3>🕐 Recent Authentication Activity <span class="count-badge" id="activityCount">–</span></h3>
+        <div class="filter-bar">
+            <input  type="text" id="activitySearch"       placeholder="🔍 Search user or IP..." oninput="filterActivity()">
+            <select id="activityStatusFilter" onchange="filterActivity()">
+                <option value="">All Statuses</option>
+                <option value="SUCCESS">Success</option>
+                <option value="FAILURE">Failure</option>
+                <option value="SENT">Sent</option>
+            </select>
+        </div>
+        <div id="recentActivity"><div class="loading"><div class="spinner"></div>Loading activity...</div></div>
+    </div>
 
-        async function loadStats() {
-            try {
-                const response = await fetch(`${API_BASE}/stats`);
-                const data = await response.json();
+    <!-- Registered Users -->
+    <div class="table-card">
+        <h3>👥 Registered Users <span class="count-badge" id="userCount">–</span></h3>
+        <div class="filter-bar">
+            <input  type="text" id="userSearch"       placeholder="🔍 Search username or email..." oninput="filterUsers()">
+            <select id="userStatusFilter" onchange="filterUsers()">
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="locked">Locked</option>
+            </select>
+        </div>
+        <div id="usersTable"><div class="loading"><div class="spinner"></div>Loading users...</div></div>
+    </div>
+</div>
 
-                const statsHtml = `
-                    <div class="stat-card">
-                        <div class="stat-icon">👥</div>
-                        <div class="stat-value">${data.total_users || 0}</div>
-                        <div class="stat-label">Total Users</div>
-                        <div class="stat-change positive">+${Math.floor(Math.random() * 5)} this week</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">🟢</div>
-                        <div class="stat-value">${data.active_sessions || 0}</div>
-                        <div class="stat-label">Active Sessions</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">📱</div>
-                        <div class="stat-value">${data.total_devices || 0}</div>
-                        <div class="stat-label">Trusted Devices</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">✅</div>
-                        <div class="stat-value">${data.last_24h?.successful_authentications || 0}</div>
-                        <div class="stat-label">Successful (24h)</div>
-                        <div class="stat-change positive">95% success rate</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">❌</div>
-                        <div class="stat-value">${data.last_24h?.failed_authentications || 0}</div>
-                        <div class="stat-label">Failed (24h)</div>
-                        ${data.last_24h?.failed_authentications > 10 ? '<div class="stat-change negative">⚠️ High failure rate</div>' : ''}
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">📧</div>
-                        <div class="stat-value">${data.channels_status?.email_enabled ? 'ON' : 'OFF'}</div>
-                        <div class="stat-label">Email Service</div>
-                        <div class="stat-change ${data.channels_status?.email_enabled ? 'positive' : 'negative'}">
-                            ${data.channels_status?.email_enabled ? '✅ Operational' : '❌ Disabled'}
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">💬</div>
-                        <div class="stat-value">${data.channels_status?.sms_enabled ? 'ON' : 'OFF'}</div>
-                        <div class="stat-label">SMS Service</div>
-                        <div class="stat-change ${data.channels_status?.sms_enabled ? 'positive' : 'negative'}">
-                            ${data.channels_status?.sms_enabled ? '✅ Operational' : '❌ Disabled'}
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">⏱️</div>
-                        <div class="stat-value">${Math.floor(Math.random() * 500)}ms</div>
-                        <div class="stat-label">Avg Response Time</div>
-                        <div class="stat-change positive">↓ 15% faster</div>
-                    </div>
-                `;
+<script>
+    const API_BASE = '/api/v1';
+    let charts      = {};
+    let allActivity = [];
+    let allUsers    = [];
 
-                document.getElementById('statsGrid').innerHTML = statsHtml;
-            } catch (error) {
-                console.error('Failed to load stats:', error);
-            }
-        }
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDashboard();
+        setInterval(loadDashboard, 30000);
+    });
 
-        async function loadCharts() {
-            // Auth Trend Chart
-            if (charts.authTrend) charts.authTrend.destroy();
-            const ctx1 = document.getElementById('authTrendChart').getContext('2d');
-            charts.authTrend = new Chart(ctx1, {
+    async function loadDashboard() {
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+        await Promise.all([loadStats(), loadCharts(), loadRecentActivity(), loadUsers()]);
+    }
+
+    // ── Stats ─────────────────────────────────────────────────
+    async function loadStats() {
+        try {
+            const data = await fetchJSON(`${API_BASE}/stats`);
+            const s24  = data.last_24h?.successful_authentications ?? 0;
+            const f24  = data.last_24h?.failed_authentications     ?? 0;
+            const rate = (s24 + f24) > 0 ? Math.round((s24 / (s24 + f24)) * 100) : 100;
+
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value">${data.total_users ?? 0}</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🟢</div>
+                    <div class="stat-value">${data.active_sessions ?? 0}</div>
+                    <div class="stat-label">Active Sessions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📱</div>
+                    <div class="stat-value">${data.total_devices ?? 0}</div>
+                    <div class="stat-label">Trusted Devices</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-value">${s24}</div>
+                    <div class="stat-label">Successful (24h)</div>
+                    <div class="stat-change positive">${rate}% success rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">❌</div>
+                    <div class="stat-value">${f24}</div>
+                    <div class="stat-label">Failed (24h)</div>
+                    ${f24 > 10 ? '<div class="stat-change negative">⚠️ High failure rate</div>' : ''}
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📧</div>
+                    <div class="stat-value">${data.channels_status?.email_enabled ? 'ON' : 'OFF'}</div>
+                    <div class="stat-label">Email Service</div>
+                    <div class="stat-change ${data.channels_status?.email_enabled ? 'positive' : 'negative'}">
+                        ${data.channels_status?.email_enabled ? '✅ Operational' : '❌ Disabled'}
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💬</div>
+                    <div class="stat-value">${data.channels_status?.sms_enabled ? 'ON' : 'OFF'}</div>
+                    <div class="stat-label">SMS Service</div>
+                    <div class="stat-change ${data.channels_status?.sms_enabled ? 'positive' : 'negative'}">
+                        ${data.channels_status?.sms_enabled ? '✅ Operational' : '❌ Disabled'}
+                    </div>
+                </div>`;
+        } catch (e) { console.error('Stats error:', e); }
+    }
+
+    // ── Charts — 100% real data from /admin/charts ────────────
+    async function loadCharts() {
+        try {
+            const data = await fetchJSON(`${API_BASE}/admin/charts`);
+
+            // 7-day trend
+            if (charts.trend) charts.trend.destroy();
+            charts.trend = new Chart(document.getElementById('authTrendChart').getContext('2d'), {
                 type: 'line',
                 data: {
-                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                    datasets: [{
-                        label: 'Successful',
-                        data: [45, 52, 48, 65, 58, 42, 38],
-                        borderColor: '#28a745',
-                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                        tension: 0.4
-                    }, {
-                        label: 'Failed',
-                        data: [5, 8, 6, 4, 7, 3, 2],
-                        borderColor: '#dc3545',
-                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                        tension: 0.4
-                    }]
+                    labels: data.trend.labels,
+                    datasets: [
+                        { label: 'Successful', data: data.trend.success, borderColor: '#28a745', backgroundColor: 'rgba(40,167,69,0.1)', tension: 0.4 },
+                        { label: 'Failed',     data: data.trend.failed,  borderColor: '#dc3545', backgroundColor: 'rgba(220,53,69,0.1)',  tension: 0.4 }
+                    ]
                 },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { position: 'bottom' } }
-                }
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
             });
 
-            // Success Rate Chart
-            if (charts.successRate) charts.successRate.destroy();
-            const ctx2 = document.getElementById('successRateChart').getContext('2d');
-            charts.successRate = new Chart(ctx2, {
+            // Success/failure doughnut
+            const sr    = data.success_rate;
+            const total = sr.success + sr.failed;
+            if (charts.rate) charts.rate.destroy();
+            charts.rate = new Chart(document.getElementById('successRateChart').getContext('2d'), {
                 type: 'doughnut',
                 data: {
                     labels: ['Successful', 'Failed'],
-                    datasets: [{
-                        data: [93, 7],
-                        backgroundColor: ['#28a745', '#dc3545']
-                    }]
+                    datasets: [{ data: total > 0 ? [sr.success, sr.failed] : [1, 0], backgroundColor: ['#28a745', '#dc3545'] }]
                 },
                 options: {
                     responsive: true,
-                    plugins: { legend: { position: 'bottom' } }
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: { callbacks: { label: ctx => {
+                            const pct = total > 0 ? Math.round((ctx.parsed / total) * 100) : 0;
+                            return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
+                        }}}
+                    }
                 }
             });
 
-            // Methods Chart
+            // Methods bar
             if (charts.methods) charts.methods.destroy();
-            const ctx3 = document.getElementById('methodsChart').getContext('2d');
-            charts.methods = new Chart(ctx3, {
+            charts.methods = new Chart(document.getElementById('methodsChart').getContext('2d'), {
                 type: 'bar',
                 data: {
-                    labels: ['TOTP App', 'SMS', 'Email', 'Multi-Channel'],
-                    datasets: [{
-                        label: 'Usage Count',
-                        data: [156, 89, 67, 34],
-                        backgroundColor: ['#667eea', '#17a2b8', '#ffc107', '#6c757d']
-                    }]
+                    labels: data.methods.labels,
+                    datasets: [{ label: 'Successful Logins', data: data.methods.counts, backgroundColor: ['#667eea','#17a2b8','#ffc107','#6c757d','#28a745'] }]
                 },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } }
-                }
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
             });
 
-            // Peak Hours Chart
-            if (charts.peakHours) charts.peakHours.destroy();
-            const ctx4 = document.getElementById('peakHoursChart').getContext('2d');
-            charts.peakHours = new Chart(ctx4, {
+            // Peak hours
+            if (charts.peak) charts.peak.destroy();
+            charts.peak = new Chart(document.getElementById('peakHoursChart').getContext('2d'), {
                 type: 'line',
                 data: {
-                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-                    datasets: [{
-                        label: 'Authentications',
-                        data: [12, 8, 45, 78, 92, 56],
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
+                    labels: data.hourly.labels,
+                    datasets: [{ label: 'Authentications', data: data.hourly.counts, borderColor: '#667eea', backgroundColor: 'rgba(102,126,234,0.1)', fill: true, tension: 0.4 }]
                 },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } }
-                }
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
             });
+
+        } catch (e) { console.error('Charts error:', e); }
+    }
+
+    // ── Recent Activity — real auth_logs ──────────────────────
+    async function loadRecentActivity() {
+        try {
+            const data = await fetchJSON(`${API_BASE}/admin/recent-activity`);
+            allActivity = data.activity || [];
+            document.getElementById('activityCount').textContent = allActivity.length;
+            renderActivity(allActivity);
+        } catch (e) {
+            document.getElementById('recentActivity').innerHTML =
+                `<div class="alert alert-error">Failed to load activity: ${e.message}</div>`;
         }
+    }
 
-        async function loadRecentActivity() {
-            try {
-                const response = await fetch(`${API_BASE}/admin/recent-activity`);
-                const data = await response.json();
-
-                const activityHtml = `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Time</th>
-                                <th>User</th>
-                                <th>Method</th>
-                                <th>IP Address</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${generateMockActivity()}
-                        </tbody>
-                    </table>
-                `;
-
-                document.getElementById('recentActivity').innerHTML = activityHtml;
-            } catch (error) {
-                document.getElementById('recentActivity').innerHTML = `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Time</th>
-                                <th>User</th>
-                                <th>Method</th>
-                                <th>IP Address</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${generateMockActivity()}
-                        </tbody>
-                    </table>
-                `;
-            }
+    function renderActivity(rows) {
+        const el = document.getElementById('recentActivity');
+        if (!rows.length) {
+            el.innerHTML = `<div class="no-data">📭 No authentication activity recorded yet.<br>
+                <small>Activity will appear here once users start logging in.</small></div>`;
+            return;
         }
-
-        function generateMockActivity() {
-            const users = ['alice', 'bob', 'charlie', 'diana', 'eve'];
-            const methods = ['TOTP', 'SMS', 'Email', 'Multi-Channel'];
-            const statuses = ['SUCCESS', 'SUCCESS', 'SUCCESS', 'SUCCESS', 'FAILURE'];
-            let html = '';
-
-            for (let i = 0; i < 10; i++) {
-                const time = new Date(Date.now() - i * 15 * 60000).toLocaleTimeString();
-                const user = users[Math.floor(Math.random() * users.length)];
-                const method = methods[Math.floor(Math.random() * methods.length)];
-                const ip = `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
-                const status = statuses[Math.floor(Math.random() * statuses.length)];
-
-                html += `
+        el.innerHTML = `
+            <table>
+                <thead><tr>
+                    <th>Time</th><th>User</th><th>Method</th>
+                    <th>IP Address</th><th>Status</th><th>Note</th>
+                </tr></thead>
+                <tbody>${rows.map(r => `
                     <tr>
-                        <td>${time}</td>
-                        <td><strong>${user}</strong></td>
-                        <td>${method}</td>
-                        <td>${ip}</td>
-                        <td><span class="status-badge status-${status.toLowerCase()}">${status}</span></td>
-                    </tr>
-                `;
-            }
-            return html;
+                        <td style="white-space:nowrap;">${formatDate(r.timestamp)}</td>
+                        <td><div class="user-cell">
+                            <div class="user-avatar">${(r.username || '?')[0].toUpperCase()}</div>
+                            <strong>${esc(r.username || '—')}</strong>
+                        </div></td>
+                        <td>${esc(r.auth_method || '—')}</td>
+                        <td><code style="font-size:12px;">${esc(r.ip_address || '—')}</code></td>
+                        <td><span class="badge ${statusBadgeClass(r.status)}">${esc(r.status)}</span></td>
+                        <td style="color:#888;font-size:12px;">${esc(r.failure_reason || '')}</td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>`;
+    }
+
+    function filterActivity() {
+        const q = document.getElementById('activitySearch').value.toLowerCase();
+        const s = document.getElementById('activityStatusFilter').value;
+        renderActivity(allActivity.filter(r =>
+            (!q || (r.username||'').toLowerCase().includes(q) || (r.ip_address||'').includes(q)) &&
+            (!s || r.status === s)
+        ));
+    }
+
+    // ── Users Table — real registered users ───────────────────
+    async function loadUsers() {
+        try {
+            const data = await fetchJSON(`${API_BASE}/admin/users`);
+            allUsers = data.users || [];
+            document.getElementById('userCount').textContent = allUsers.length;
+            renderUsers(allUsers);
+        } catch (e) {
+            document.getElementById('usersTable').innerHTML =
+                `<div class="alert alert-error">Failed to load users: ${e.message}</div>`;
         }
+    }
 
-        async function loadUsers() {
-            try {
-                const response = await fetch(`${API_BASE}/admin/users`);
-                const data = await response.json();
-
-                const usersHtml = `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Username</th>
-                                <th>Email</th>
-                                <th>Status</th>
-                                <th>2FA</th>
-                                <th>Last Login</th>
-                                <th>Devices</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${generateMockUsers()}
-                        </tbody>
-                    </table>
-                `;
-
-                document.getElementById('usersTable').innerHTML = usersHtml;
-            } catch (error) {
-                document.getElementById('usersTable').innerHTML = `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Username</th>
-                                <th>Email</th>
-                                <th>Status</th>
-                                <th>2FA</th>
-                                <th>Last Login</th>
-                                <th>Devices</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${generateMockUsers()}
-                        </tbody>
-                    </table>
-                `;
-            }
+    function renderUsers(rows) {
+        const el = document.getElementById('usersTable');
+        if (!rows.length) {
+            el.innerHTML = `<div class="no-data">📭 No users registered yet.<br>
+                <small>Users will appear here after they register via the main app.</small></div>`;
+            return;
         }
-
-        function generateMockUsers() {
-            const users = [
-                { username: 'alice', email: 'alice@example.com' },
-                { username: 'bob', email: 'bob@example.com' },
-                { username: 'charlie', email: 'charlie@example.com' },
-                { username: 'diana', email: 'diana@example.com' },
-                { username: 'eve', email: 'eve@example.com' }
-            ];
-            
-            let html = '';
-            users.forEach(user => {
-                const lastLogin = new Date(Date.now() - Math.random() * 86400000).toLocaleDateString();
-                const devices = Math.floor(Math.random() * 5) + 1;
-
-                html += `
-                    <tr>
-                        <td><strong>${user.username}</strong></td>
-                        <td>${user.email}</td>
-                        <td><span class="status-badge status-active">Active</span></td>
+        el.innerHTML = `
+            <table>
+                <thead><tr>
+                    <th>Username</th><th>Email</th><th>Phone</th>
+                    <th>Status</th><th>2FA</th><th>Last Login</th>
+                    <th>Devices</th><th>Sessions</th><th>Registered</th>
+                </tr></thead>
+                <tbody>${rows.map(u => {
+                    const isLocked  = u.locked_until && new Date(u.locked_until) > new Date();
+                    const statusLbl = isLocked ? 'Locked' : (u.account_status || 'active');
+                    const statusCls = isLocked ? 'badge-locked' : 'badge-active';
+                    return `<tr>
+                        <td><div class="user-cell">
+                            <div class="user-avatar">${u.username[0].toUpperCase()}</div>
+                            <strong>${esc(u.username)}</strong>
+                        </div></td>
+                        <td>${esc(u.email)}</td>
+                        <td style="color:#888;font-size:13px;">${esc(u.phone_number || '—')}</td>
+                        <td><span class="badge ${statusCls}">${statusLbl}</span></td>
                         <td>✅ Enabled</td>
-                        <td>${lastLogin}</td>
-                        <td>${devices}</td>
-                    </tr>
-                `;
-            });
-            return html;
-        }
-    </script>
+                        <td style="white-space:nowrap;">${u.last_login
+                            ? formatDate(u.last_login)
+                            : '<span style="color:#aaa;">Never</span>'}</td>
+                        <td><span class="badge badge-active">${u.device_count ?? 0}</span></td>
+                        <td>${(u.active_sessions ?? 0) > 0
+                            ? `<span class="badge badge-session">${u.active_sessions} active</span>`
+                            : `<span style="color:#aaa;font-size:12px;">None</span>`}</td>
+                        <td style="font-size:12px;color:#888;white-space:nowrap;">${formatDate(u.created_at)}</td>
+                    </tr>`;
+                }).join('')}
+                </tbody>
+            </table>`;
+    }
+
+    function filterUsers() {
+        const q = document.getElementById('userSearch').value.toLowerCase();
+        const s = document.getElementById('userStatusFilter').value;
+        renderUsers(allUsers.filter(u => {
+            const locked = u.locked_until && new Date(u.locked_until) > new Date();
+            return (
+                (!q || u.username.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) &&
+                (!s || (s === 'locked' ? locked : !locked))
+            );
+        }));
+    }
+
+    // ── Helpers ───────────────────────────────────────────────
+    async function fetchJSON(url) {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+    }
+
+    function statusBadgeClass(status) {
+        if (status === 'SUCCESS') return 'badge-success';
+        if (status === 'FAILURE') return 'badge-failure';
+        if (status === 'SENT')    return 'badge-sent';
+        return '';
+    }
+
+    function formatDate(iso) {
+        if (!iso) return '—';
+        try { return new Date(iso).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }); }
+        catch { return iso; }
+    }
+
+    function esc(s) {
+        return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+</script>
 </body>
 </html>
